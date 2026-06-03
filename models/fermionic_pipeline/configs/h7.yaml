@@ -1,0 +1,38 @@
+# H7 (7 atoms, 14 qubits STO-3G, 28 Majorana modes) — Chan-aligned
+data:
+  n_atoms: 7
+  r_start: 0.5
+  r_end: 3.0
+  r_step: 0.05             # 51 geometries
+  n_times: 2500             # dt = t_max/(n_times-1) ≈ 0.2 a.u.; Nyquist ≈ 15.7 Eₕ
+  t_max: 500.0              # Δω = 2π/t_max ≈ 12.6 mEₕ
+  n_shadows: 50
+  observable_locality: 3
+  n_test_geom: 10
+  seed: 42
+
+spectroscopy:
+  ljung_box_p_threshold: 0.06
+  n_eigenvectors: 5
+
+model:
+  d_model: 128
+  n_layers: 4
+  n_heads: 4
+  d_ff: 512
+  dropout: 0.1
+  hidden_dim: 128
+  inject_every_layer: true
+
+training:
+  iterations: 87500
+  batch_size: 256
+  lr: 1.0e-3
+  final_lr: 1.0e-7
+  warmup_frac: 0.05
+  weight_decay: 1.0e-4
+  smoothing: 0.1
+  eval_every: 2000
+
+eval:
+  n_eval_shadows: 100

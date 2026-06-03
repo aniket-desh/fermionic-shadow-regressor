@@ -1,0 +1,33 @@
+# H4 fast — minimal config for end-to-end pipeline sanity check (~30 min total)
+data:
+  n_atoms: 4
+  r_start: 0.5
+  r_end: 3.0
+  r_step: 0.5          # 6 geometries (not 26)
+  t_max: 10.0
+  n_times: 10           # 10 time points (not 50)
+  n_shadows: 100         # 100 per (R,t) — 6k total (not 325k)
+  n_test_geom: 2         # 2 held-out geometries
+  seed: 42
+
+model:
+  d_model: 128
+  n_layers: 4
+  n_heads: 4
+  d_ff: 512
+  dropout: 0.1
+  hidden_dim: 128
+  inject_every_layer: false
+
+training:
+  iterations: 10000       # 10k (not 50k)
+  batch_size: 256
+  lr: 1.0e-3
+  final_lr: 1.0e-7
+  warmup_frac: 0.05
+  weight_decay: 0.0
+  smoothing: 0.0
+  eval_every: 1000
+
+eval:
+  n_eval_shadows: 500     # 500 (not 5000)

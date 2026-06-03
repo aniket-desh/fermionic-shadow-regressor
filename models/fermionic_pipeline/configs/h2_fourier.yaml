@@ -1,0 +1,43 @@
+# H2 with Fourier time embedding — tests whether periodic features fix spectral recovery
+# Same data/training as h2.yaml, only model.time_embedding changed
+data:
+  n_atoms: 2
+  r_start: 0.5
+  r_end: 3.0
+  r_step: 0.05             # 51 geometries
+  n_times: 2500             # dt ≈ 0.2 a.u.; Nyquist ≈ 15.7 Eₕ
+  t_max: 500.0              # Δω ≈ 12.6 mEₕ
+  n_shadows: 50
+  observable_locality: 3
+  n_test_geom: 10
+  seed: 42
+
+spectroscopy:
+  ljung_box_p_threshold: 0.06
+  n_eigenvectors: 5
+
+model:
+  d_model: 128
+  n_layers: 4
+  n_heads: 4
+  d_ff: 512
+  dropout: 0.1
+  hidden_dim: 128
+  inject_every_layer: true
+  time_embedding: fourier
+  n_freq: 64
+  max_freq: 2.0
+  param_range: [0.5, 3.0]
+
+training:
+  iterations: 50000
+  batch_size: 256
+  lr: 1.0e-3
+  final_lr: 1.0e-7
+  warmup_frac: 0.05
+  weight_decay: 1.0e-4
+  smoothing: 0.1
+  eval_every: 2000
+
+eval:
+  n_eval_shadows: 500

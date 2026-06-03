@@ -1,0 +1,48 @@
+# H4 (4 atoms, 8 qubits STO-3G, 16 Majorana modes) — Chan-aligned shadow spectroscopy
+# Chan et al. (2212.11036) Fig 6: N_T=500, N_s=50, ≤3-local, exact time evolution
+# Adapted: dt=0.2 (Nyquist = π/0.2 ≈ 15.7 Eₕ, safe for H4 energy scale ~0.01–2 Eₕ)
+# D matrix: 1,788 × 2,500 per geometry (Chan: 10,689 × 500)
+# C matrix: 2,500 × 2,500 (Chan: 500 × 500)
+# Δω = 2π/500 ≈ 12.6 mEₕ; resolves gaps ≳ 25 mEₕ
+# Shadows: 51 geom × 2,500 times × 50 = 6.375M (datagen) + 10 × 2,500 × 100 = 2.5M (eval)
+data:
+  n_atoms: 4
+  r_start: 0.5
+  r_end: 3.0
+  r_step: 0.05             # 51 geometries (Wang: 80 Hamiltonians)
+  n_times: 2500             # dt = t_max/(n_times-1) ≈ 0.2 a.u.; Nyquist ≈ 15.7 Eₕ
+  t_max: 500.0              # Δω = 2π/t_max ≈ 12.6 mEₕ
+  n_shadows: 50             # Chan: 50 ✓
+  observable_locality: 3    # Chan: ≤3-local → N_o = 1,788 for 8 qubits
+  n_test_geom: 10           # hold out 10 → 41 train (Wang: 80 train / 20 test)
+  seed: 42
+
+# Spectroscopy post-processing (evaluation, not training)
+spectroscopy:
+  ljung_box_p_threshold: 0.06   # Chan: p ∈ [1e-20, 0.06]
+  n_eigenvectors: 5              # Chan: 5 dominant eigvecs of C
+
+# Initial state per geometry: Hartree-Fock |ψ_HF⟩ = |11110000⟩
+# HF overlaps many eigenstates → rich multi-frequency dynamics for spectroscopy
+
+model:
+  d_model: 128             # Wang: d_model=128
+  n_layers: 4              # Wang: 4 layers
+  n_heads: 4               # Wang: 4 heads
+  d_ff: 512                # standard 4× d_model
+  dropout: 0.1
+  hidden_dim: 128
+  inject_every_layer: true  # FiLM conditioning at every decoder layer
+
+training:
+  iterations: 50000        # Wang: 100k (Rydberg); 50k with our larger dataset
+  batch_size: 256          # Wang: 100; 256 for GPU efficiency
+  lr: 1.0e-3
+  final_lr: 1.0e-7
+  warmup_frac: 0.05
+  weight_decay: 1.0e-4
+  smoothing: 0.1
+  eval_every: 2000
+
+eval:
+  n_eval_shadows: 500       # 10 geom × 2,500 times × 500 = 12.5M shadows
