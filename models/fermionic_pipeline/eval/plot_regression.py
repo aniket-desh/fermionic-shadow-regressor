@@ -315,11 +315,17 @@ def plot_chan_pipeline(handle, model, test_r_indices, device, save_dir, ljung_bo
 
 
 @torch.no_grad()
-def plot_coherence_heatmap(handle, model, test_r_indices, device, save_dir, window=20):
+def plot_coherence_heatmap(handle, model, test_r_indices, device, save_dir, window=20,
+                           train_R_range=None, train_t_range=None):
     """Heatmap of windowed Pearson r as a function of (R, t).
 
     Shows model coherence time — at large R the model tracks exact
     observables across the full t range; at short R it loses phase quickly.
+
+    A dashed rectangle marks the training-data region in (R, t). When the eval
+    grid is extended to extrapolated geometries/times, the box delimits in-box
+    (interpolation, Prop 1) from out-of-box (extrapolation, Prop 2) regimes.
+    ``train_R_range`` / ``train_t_range`` default to the full dataset extent.
     """
     times = handle.times
     N_t = len(times)
@@ -368,6 +374,30 @@ def plot_coherence_heatmap(handle, model, test_r_indices, device, save_dir, wind
     ax.set_ylabel("R (Å)", fontsize=11)
     ax.set_title("Windowed Pearson r(R, t) — model vs exact observables", fontsize=12)
     plt.colorbar(im, ax=ax, label="Pearson r")
+
+    # Training-data bounding box. Defaults to the full dataset (R, t) extent; the
+    # held-out test geometries here all sit inside it, so for the in-box eval the
+    # box nearly fills the panel. Once extrapolated R/t are evaluated, the box
+    # stays put and the surrounding region is the extrapolation regime.
+    from matplotlib.patches import Rectangle
+
+    if train_R_range is None:
+        train_R_range = (float(np.min(handle.R_values)), float(np.max(handle.R_values)))
+    if train_t_range is None:
+        train_t_range = (float(times[0]), float(times[-1]))
+    R_lo, R_hi = train_R_range
+    t_lo, t_hi = train_t_range
+    ax.add_patch(Rectangle(
+        (t_lo, R_lo), t_hi - t_lo, R_hi - R_lo,
+        fill=False, edgecolor="black", linestyle="--", linewidth=1.8,
+        label="training data",
+    ))
+    # Expand limits so the box is fully visible even when eval ⊆ training (now)
+    # or eval ⊋ training (after the extrapolation runs). y-axis is inverted.
+    ax.set_xlim(min(t_centers[0], t_lo), max(t_centers[-1], t_hi))
+    ax.set_ylim(max(Rs[-1], R_hi), min(Rs[0], R_lo))
+    ax.legend(loc="upper right", fontsize=9, framealpha=0.85)
+
     fig.tight_layout()
     path = os.path.join(save_dir, "coherence_heatmap.pdf")
     fig.savefig(path)
