@@ -22,9 +22,10 @@
 #
 # Architecture = v15_explicit exactly (see slurm/regression_v15.sh):
 #   --adaptive_bandwidth --omega_op_floor 8.0 --soft_omega_floor
-#   --explicit_amplitude --amp_rank 16
-#   (NO --with_residual, NO --grad_clip / --residual_grad_clip → unclipped,
-#    which is stable here because there is no trunk to explode.)
+#   --explicit_amplitude --amp_rank 16 --grad_clip 1.0
+#   (NO --with_residual; --grad_clip 1.0 ADDED after the original unclipped v18
+#    orb arm collapsed (0.323). v18b proved the clip restores it (0.922). The
+#    "stable unclipped" premise was wrong — see the COMMON_ARCH_FLAGS note below.)
 #   v18_orb : + --use_orb_features --standardize_orb_energies   (chemically informed)
 #   v18_R   : (neither)                                         (geometry only; scalar R)
 #
@@ -118,10 +119,15 @@ fi
 
 SUBMITTED=()
 
-# v15_explicit architecture, input-mode-agnostic. NO --with_residual and NO clip
-# flags: the explicit branch trained stably unclipped in v15 because there is no
-# residual trunk to explode (the instability v16/v17 fought was the trunk).
-COMMON_ARCH_FLAGS="--adaptive_bandwidth --omega_op_floor ${OMEGA_OP_FLOOR} --soft_omega_floor --explicit_amplitude --amp_rank 16"
+# v15_explicit architecture, input-mode-agnostic. NO --with_residual (no trunk).
+# --grad_clip 1.0 is REQUIRED: the original v18 ran unclipped on the (now
+# FALSIFIED) premise that the trunk-free explicit branch was stable unclipped.
+# It is not — train_mse explodes either way (the orb arm collapsed: 0.323).
+# v18b (orb_clip s42) proved grad_clip 1.0 restores the composition: envelope
+# ~0.998, phase ~0.02 rad, overall Pearson 0.922 (≈ v15's 0.915). Note: clipping
+# does NOT tame the train_mse magnitude (~1e4) — it bounds the per-step gradient,
+# which is what actually protects the amp/freq composition. See 6/04 log.
+COMMON_ARCH_FLAGS="--adaptive_bandwidth --omega_op_floor ${OMEGA_OP_FLOOR} --soft_omega_floor --explicit_amplitude --amp_rank 16 --grad_clip 1.0"
 
 # Input-mode ablation. orb = chemically informed; R = geometry only.
 declare -a VARIANTS=(

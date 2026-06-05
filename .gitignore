@@ -189,3 +189,20 @@ notebooks/datasets/qchem/H6/STO-3G/0.7/H6_STO-3G_0.7.h5
 notebooks/datasets/qchem/H6/STO-3G/1.1/H6_STO-3G_1.1.h5
 notebooks/datasets/qchem/H7/STO-3G/0.7/H7_STO-3G_0.7.h5
 notebooks/datasets/qchem/H7/STO-3G/1.1/H7_STO-3G_1.1.h5
+
+# Run artifacts — datasets, checkpoints, plots, logs (regen-able on the cluster,
+# never committed; the large h5/pt would bloat the repo)
+models/results/
+models/logs/
+
+# Generated per-run slurm scripts (drivers write slurm/_<tag>.sh; only the
+# tracked drivers are committed, never the generated ones)
+models/slurm/_*.sh
+
+# Manuscript draft — worked on separately, kept out of the code repo
+paper.tex
+*.aux
+*.bbl
+*.blg
+*.synctex.gz
+*.out.tex
