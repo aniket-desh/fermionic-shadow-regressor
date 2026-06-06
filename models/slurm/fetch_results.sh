@@ -20,6 +20,8 @@
 #   bash slurm/fetch_results.sh --include-h5          # include big datasets
 #   bash slurm/fetch_results.sh fast --include-h5     # tag + include .h5
 #   bash slurm/fetch_results.sh --which v13 --data-only  # ONLY *.h5 (no pdfs/json/pt)
+#   bash slurm/fetch_results.sh --which v13 --light --logs     # dipole npz + logs (no h5/pt)
+#   bash slurm/fetch_results.sh --which extrap --light --logs  # heatmap pdf + logs (no h5/pt)
 
 set -e
 
@@ -32,11 +34,13 @@ WHICH=""
 FETCH_LOGS=false
 INCLUDE_H5=false
 DATA_ONLY=false
+LIGHT=false
 while [ $# -gt 0 ]; do
     case "$1" in
         --logs)        FETCH_LOGS=true ;;
         --include-h5)  INCLUDE_H5=true ;;
         --data-only)   DATA_ONLY=true; INCLUDE_H5=true ;;  # only *.h5; implies no size cap
+        --light)       LIGHT=true ;;   # deliverables only: skip *.h5 AND *.pt (datasets + checkpoints)
         --which)       WHICH="$2"; shift ;;
         --which=*)     WHICH="${1#*=}" ;;
         --*)           echo "unknown flag: $1"; exit 1 ;;
@@ -50,11 +54,14 @@ if [ -n "$WHICH" ] && [ -n "$TAG" ]; then
 fi
 
 # Default rsync filters: skip large dataset files unless --include-h5. The .h5
-# exclude is listed FIRST so it wins before any --which include rule. NOTE:
-# --include-h5 must ALSO drop the 200M size cap, else big datasets (~1.4 GB) are
-# silently dropped by --max-size even though the .h5 exclude was lifted.
+# (and, under --light, .pt) excludes are listed FIRST so they win before any
+# --which include rule. NOTE: --include-h5 must ALSO drop the 200M size cap, else
+# big datasets (~1.4 GB) are silently dropped by --max-size even though the .h5
+# exclude was lifted. --light = deliverables only (plots + small data + logs):
+# skip both the datasets (*.h5) and the checkpoints (*.pt).
 if [ "$INCLUDE_H5" = false ]; then
     RSYNC_FILTERS=(--max-size=200M --exclude='*.h5')
+    [ "$LIGHT" = true ] && RSYNC_FILTERS+=(--exclude='*.pt')
 else
     RSYNC_FILTERS=()
 fi
@@ -62,6 +69,8 @@ fi
 echo "=== Fetching results from Trillium ==="
 if [ "$DATA_ONLY" = true ]; then
     echo "  data-only: true   (only *.h5 — no pdfs/json/checkpoints; no size cap)"
+elif [ "$LIGHT" = true ]; then
+    echo "  light: true   (deliverables only — skip *.h5 datasets and *.pt checkpoints)"
 elif [ "$INCLUDE_H5" = false ]; then
     echo "  include .h5: false    max file size: 200M (override w/ --include-h5)"
 else
