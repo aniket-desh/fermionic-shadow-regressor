@@ -124,7 +124,7 @@ def _self_test(n_atoms, R, n_qubits, keys, h5_expect_t0=None):
 
     H_sparse, nq = build_hydrogen_chain_hamiltonian(n_atoms, R)
     assert nq == n_qubits, f"n_qubits mismatch: {nq} != {n_qubits}"
-    psi0 = prepare_initial_state(H_sparse, n_qubits, n_electrons=n_atoms)
+    psi0, _eigvals = prepare_initial_state(H_sparse, n_qubits, n_electrons=n_atoms)
     psi0 = np.asarray(psi0, dtype=np.complex128).reshape(-1)
 
     c, c0, mats, actions = _coeffs_for_geometry(n_atoms, R, n_qubits, keys)
