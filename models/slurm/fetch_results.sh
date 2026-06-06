@@ -5,11 +5,12 @@
 # Trillium and rarely needed locally. Pulls everything else: checkpoints
 # (*.pt), eval JSON, plots, history. Pass --include-h5 to override.
 #
-# --which TOKEN restricts BOTH results and logs to paths whose name contains
-# TOKEN (substring, at any depth). Use it when local disk is tight and you only
-# want one run — e.g. `--which v17` pulls just results/.../*v17*/ dirs and
-# logs/*v17* files, not the whole tree. TOKEN is a literal substring, so `v17`
-# matches `h4_regress_v17_v17_orb_s42_model` but never `v1`/`v10`/`v16`.
+# --which TOKEN [TOKEN ...] restricts BOTH results and logs to paths whose name
+# contains ANY of the tokens (substring, at any depth; OR-matched). Use it when
+# local disk is tight and you only want some runs — e.g. `--which v17` pulls just
+# results/.../*v17*/ dirs and logs/*v17* files; `--which v13 extrap` pulls both.
+# A token is a literal substring, so `v17` matches `h4_regress_v17_v17_orb_s42_model`
+# but never `v1`/`v10`/`v16`.
 #
 # Usage:
 #   bash slurm/fetch_results.sh                       # all tags, no .h5
@@ -22,6 +23,7 @@
 #   bash slurm/fetch_results.sh --which v13 --data-only  # ONLY *.h5 (no pdfs/json/pt)
 #   bash slurm/fetch_results.sh --which v13 --light --logs     # dipole npz + logs (no h5/pt)
 #   bash slurm/fetch_results.sh --which extrap --light --logs  # heatmap pdf + logs (no h5/pt)
+#   bash slurm/fetch_results.sh --which v13 extrap --light --logs  # both, in one pull
 
 set -e
 
@@ -30,7 +32,7 @@ REMOTE_DIR="\$SCRATCH/generative-quantum-states"
 LOCAL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 TAG=""
-WHICH=""
+WHICH_TOKENS=()       # one or more substring tokens; results/logs matching ANY are pulled
 FETCH_LOGS=false
 INCLUDE_H5=false
 DATA_ONLY=false
@@ -41,16 +43,19 @@ while [ $# -gt 0 ]; do
         --include-h5)  INCLUDE_H5=true ;;
         --data-only)   DATA_ONLY=true; INCLUDE_H5=true ;;  # only *.h5; implies no size cap
         --light)       LIGHT=true ;;   # deliverables only: skip *.h5 AND *.pt (datasets + checkpoints)
-        --which)       WHICH="$2"; shift ;;
-        --which=*)     WHICH="${1#*=}" ;;
+        --which)       # consume all following non-flag args as tokens: --which v13 extrap
+                       shift
+                       while [ $# -gt 0 ] && [ "${1#-}" = "$1" ]; do WHICH_TOKENS+=("$1"); shift; done
+                       continue ;;
+        --which=*)     WHICH_TOKENS+=("${1#*=}") ;;
         --*)           echo "unknown flag: $1"; exit 1 ;;
         *)             [ -z "$TAG" ] && TAG="$1" ;;
     esac
     shift
 done
 
-if [ -n "$WHICH" ] && [ -n "$TAG" ]; then
-    echo "note: --which '$WHICH' overrides positional tag '$TAG' for results selection"
+if [ ${#WHICH_TOKENS[@]} -gt 0 ] && [ -n "$TAG" ]; then
+    echo "note: --which (${WHICH_TOKENS[*]}) overrides positional tag '$TAG' for results selection"
 fi
 
 # Default rsync filters: skip large dataset files unless --include-h5. The .h5
@@ -77,28 +82,27 @@ else
     echo "  include .h5: true     max file size: unlimited"
 fi
 
-if [ -n "$WHICH" ]; then
+if [ ${#WHICH_TOKENS[@]} -gt 0 ]; then
     # Substring-filter the whole tree: descend into every dir (--include='*/'),
-    # keep only files under a dir whose name contains TOKEN (the '*/***' tail
+    # keep only files under a dir whose name contains ANY token (the '*/***' tail
     # matches that dir and everything beneath it), drop the rest, and prune the
     # empty dir skeletons left behind (-m). Under --data-only, keep ONLY *.h5
-    # files sitting in a token-matching dir.
-    echo "  which: *${WHICH}*  (substring match on dir names, recursive)"
-    if [ "$DATA_ONLY" = true ]; then
-        rsync -avzm "${RSYNC_FILTERS[@]}" \
-            --include='*/' \
-            --include="*${WHICH}*/*.h5" \
-            --exclude='*' \
-            "${REMOTE}:${REMOTE_DIR}/results/fermionic_pipeline/" \
-            "${LOCAL_DIR}/results/fermionic_pipeline/"
-    else
-        rsync -avzm "${RSYNC_FILTERS[@]}" \
-            --include='*/' \
-            --include="*${WHICH}*/***" \
-            --exclude='*' \
-            "${REMOTE}:${REMOTE_DIR}/results/fermionic_pipeline/" \
-            "${LOCAL_DIR}/results/fermionic_pipeline/"
-    fi
+    # files sitting in a token-matching dir. Multiple tokens are OR-matched.
+    echo "  which: ${WHICH_TOKENS[*]}  (substring match on dir names; any-of, recursive)"
+    WHICH_INC=()
+    for tok in "${WHICH_TOKENS[@]}"; do
+        if [ "$DATA_ONLY" = true ]; then
+            WHICH_INC+=(--include="*${tok}*/*.h5")
+        else
+            WHICH_INC+=(--include="*${tok}*/***")
+        fi
+    done
+    rsync -avzm "${RSYNC_FILTERS[@]}" \
+        --include='*/' \
+        "${WHICH_INC[@]}" \
+        --exclude='*' \
+        "${REMOTE}:${REMOTE_DIR}/results/fermionic_pipeline/" \
+        "${LOCAL_DIR}/results/fermionic_pipeline/"
 elif [ -n "$TAG" ]; then
     echo "  tag: $TAG"
     if [ "$DATA_ONLY" = true ]; then
@@ -128,14 +132,16 @@ fi
 if [ "$FETCH_LOGS" = true ]; then
     echo ""
     echo "=== Fetching logs ==="
-    [ -n "$WHICH" ] && echo "  which: *${WHICH}* (only log files containing the token)"
+    [ ${#WHICH_TOKENS[@]} -gt 0 ] && echo "  which: ${WHICH_TOKENS[*]} (only log files containing any token)"
     mkdir -p "${LOCAL_DIR}/logs"
     BEFORE=$(find "${LOCAL_DIR}/logs/" -maxdepth 1 -type f | wc -l | tr -d ' ')
-    # Per-prefix include patterns; when --which is set, also require the token.
+    # Per-prefix include patterns; when --which is set, also require a token (any-of).
     LOG_INCLUDES=()
     for prefix in ferm-pipeline_ exact_gen_ clf_ eval_ reg_; do
-        if [ -n "$WHICH" ]; then
-            LOG_INCLUDES+=(--include="${prefix}*${WHICH}*")
+        if [ ${#WHICH_TOKENS[@]} -gt 0 ]; then
+            for tok in "${WHICH_TOKENS[@]}"; do
+                LOG_INCLUDES+=(--include="${prefix}*${tok}*")
+            done
         else
             LOG_INCLUDES+=(--include="${prefix}*")
         fi
