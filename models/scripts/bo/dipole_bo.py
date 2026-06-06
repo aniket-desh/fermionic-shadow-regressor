@@ -95,8 +95,11 @@ def _bo_one_geometry(handle, model, R_npz, cx, t, x_cand, stride, fft_freq, args
     y_true = mu_exact[::stride]
     prior_fsr = _interp_fn(t, mu_fsr)
     prior_flat = lambda x: np.zeros(len(np.asarray(x, float).reshape(-1)))
-    sv_fsr = max(np.var(y_true - prior_fsr(x_cand)), 1e-6)
+    resid = y_true - prior_fsr(x_cand)
+    sv_fsr = max(np.var(resid), 1e-6)
     sv_flat = max(np.var(y_true), 1e-6)
+    sig_std = max(float(np.std(y_true)), 1e-9)
+    fsr_rel_err = float(np.sqrt(np.mean(resid ** 2)) / sig_std)  # 0-sample FSR error, in units of std
     spec = np.abs(np.fft.rfft(mu_exact - mu_exact.mean()))
     E_peak = float(fft_freq[1:][np.argmax(spec[1:])])
     ls = args.length_scale if args.length_scale > 0 else float(np.clip(np.pi / (2 * E_peak), 0.3, 12.0))
@@ -119,7 +122,8 @@ def _bo_one_geometry(handle, model, R_npz, cx, t, x_cand, stride, fft_freq, args
             disp = dict(x=x_cand[:, 0], y=y_true, prior=prior_fsr(x_cand),
                         fsr_mean=gpf.predict(x_cand), flat_mean=gp0.predict(x_cand),
                         sampled=x_cand[uf, 0], sampled_y=y_true[uf])
-    return dict(R=R, fsr=np.array(fsr_c), flat=np.array(flat_c), fit=disp)
+    return dict(R=R, fsr=np.array(fsr_c), flat=np.array(flat_c), fit=disp,
+                fsr_rel_err=fsr_rel_err, rel_tol=args.rel_rmse)
 
 
 def main():
@@ -170,10 +174,19 @@ def main():
     fsr_m = np.array([s["fsr"].mean() for s in sweep])
     flat_m = np.array([s["flat"].mean() for s in sweep])
     fsr_e = np.array([1.96 * s["fsr"].std() / np.sqrt(len(s["fsr"])) for s in sweep])
+    rel_err = np.array([s["fsr_rel_err"] for s in sweep])
+    rel_tol = float(sweep[0]["rel_tol"])
+
+    # persist sweep arrays so the figure can be replotted/retuned without re-running
+    import json
+    with open(os.path.join(args.save_dir, "dipole_bo_sweep.json"), "w") as f:
+        json.dump(dict(R=Rs.tolist(), fsr=fsr_m.tolist(), flat=flat_m.tolist(),
+                       fsr_ci=fsr_e.tolist(), fsr_rel_err=rel_err.tolist(),
+                       rel_tol=rel_tol, max_samples=args.max_samples), f, indent=2)
 
     nEx = len(examples)
-    fig = plt.figure(figsize=(4.2 * nEx, 7.4))
-    gs = fig.add_gridspec(2, nEx, height_ratios=[1.4, 1.6], hspace=0.34, wspace=0.26)
+    fig = plt.figure(figsize=(4.6 * nEx, 9.6))
+    gs = fig.add_gridspec(3, nEx, height_ratios=[1.2, 1.2, 1.2], hspace=0.40, wspace=0.26)
     for k, ex in enumerate(examples):
         ax = fig.add_subplot(gs[0, k]); c = ex["fit"]
         ax.plot(c["x"], c["y"], color="k", lw=0.9, label="target")
@@ -184,17 +197,27 @@ def main():
         ax.set_xlabel("t (a.u.)", fontsize=9)
         if k == 0:
             ax.set_ylabel(r"$\langle\mu_x(t)\rangle$", fontsize=10); ax.legend(fontsize=7, loc="best")
+    # row 1: samples-vs-R
     axs = fig.add_subplot(gs[1, :])
     axs.axhline(args.max_samples, color="#9ca3af", ls=":", lw=1, alpha=0.8)
     axs.plot(Rs, flat_m, "-o", color="#6b7280", ms=4, label="flat prior")
     axs.fill_between(Rs, fsr_m - fsr_e, fsr_m + fsr_e, color="#16a34a", alpha=0.2)
     axs.plot(Rs, fsr_m, "-o", color="#16a34a", ms=4, label="FSR prior (v18-orb)")
-    for ex in examples:
-        axs.axvline(ex["R"], color="k", ls="--", lw=0.6, alpha=0.4)
-    axs.set_xlabel("R (Å)", fontsize=11)
-    axs.set_ylabel("quantum samples to reach tolerance", fontsize=10)
-    axs.set_title("Dipole reconstruction: samples needed vs bond length (H4, v18-orb prior)", fontsize=10)
+    axs.set_ylabel("quantum samples\nto reach tolerance", fontsize=10)
+    axs.set_title("Dipole reconstruction sample efficiency vs bond length (H4, v18-orb prior)", fontsize=10)
     axs.set_ylim(-1, args.max_samples + 3); axs.legend(fontsize=9, loc="center right")
+    # row 2: the smooth quantity that explains it — FSR 0-sample error vs R
+    axe = fig.add_subplot(gs[2, :], sharex=axs)
+    axe.plot(Rs, rel_err, "-o", color="#16a34a", ms=4, label="FSR prior error (0 samples)")
+    axe.axhline(rel_tol, color="#b91c1c", ls="--", lw=1.2, label=f"tolerance ({rel_tol:g}×std)")
+    axe.fill_between(Rs, 0, rel_tol, color="#16a34a", alpha=0.08)
+    axe.set_xlabel("R (Å)", fontsize=11)
+    axe.set_ylabel("FSR error / signal std", fontsize=10)
+    axe.set_title("Why: FSR prior accuracy vs bond length (below the line → 0 samples needed)", fontsize=10)
+    axe.legend(fontsize=9, loc="upper center")
+    for ax in (axs, axe):
+        for ex in examples:
+            ax.axvline(ex["R"], color="k", ls="--", lw=0.6, alpha=0.35)
     path = os.path.join(args.save_dir, "dipole_bo_sweep_h4.pdf")
     fig.savefig(path, bbox_inches="tight")
     plt.close(fig)
