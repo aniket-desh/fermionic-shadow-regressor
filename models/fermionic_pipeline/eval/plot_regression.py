@@ -387,16 +387,31 @@ def plot_coherence_heatmap(handle, model, test_r_indices, device, save_dir, wind
         train_t_range = (float(times[0]), float(times[-1]))
     R_lo, R_hi = train_R_range
     t_lo, t_hi = train_t_range
-    ax.add_patch(Rectangle(
-        (t_lo, R_lo), t_hi - t_lo, R_hi - R_lo,
-        fill=False, edgecolor="black", linestyle="--", linewidth=1.8,
-        label="training data",
-    ))
+    # High-contrast box: a white halo under a bold blue dashed line reads clearly
+    # over the whole RdYlGn range (black vanishes in red, white in yellow).
+    ax.add_patch(Rectangle((t_lo, R_lo), t_hi - t_lo, R_hi - R_lo,
+                           fill=False, edgecolor="white", linewidth=3.6, zorder=4))
+    ax.add_patch(Rectangle((t_lo, R_lo), t_hi - t_lo, R_hi - R_lo,
+                           fill=False, edgecolor="#0b3dff", linestyle="--", linewidth=2.0,
+                           zorder=5, label="training region"))
+    # Quantify the interpolation-vs-extrapolation contrast (Prop 1/2).
+    Rs_arr = np.array(Rs)
+    in_R = (Rs_arr >= R_lo) & (Rs_arr <= R_hi)
+    in_t = (t_centers >= t_lo) & (t_centers <= t_hi)
+    if in_R.any() and in_t.any() and not (in_R.all() and in_t.all()):
+        inbox = corr_map[np.ix_(in_R, in_t)]
+        omask = np.ones_like(corr_map, dtype=bool)
+        omask[np.ix_(in_R, in_t)] = False
+        ax.text(0.015, 0.03,
+                f"in-box  $\\bar r$={np.nanmean(inbox):.2f}     "
+                f"out-of-box  $\\bar r$={np.nanmean(corr_map[omask]):.2f}",
+                transform=ax.transAxes, fontsize=10, color="#0b3dff",
+                bbox=dict(boxstyle="round", fc="white", ec="#0b3dff", alpha=0.85))
     # Expand limits so the box is fully visible even when eval ⊆ training (now)
     # or eval ⊋ training (after the extrapolation runs). y-axis is inverted.
     ax.set_xlim(min(t_centers[0], t_lo), max(t_centers[-1], t_hi))
     ax.set_ylim(max(Rs[-1], R_hi), min(Rs[0], R_lo))
-    ax.legend(loc="upper right", fontsize=9, framealpha=0.85)
+    ax.legend(loc="upper right", fontsize=9, framealpha=0.9)
 
     fig.tight_layout()
     path = os.path.join(save_dir, "coherence_heatmap.pdf")
