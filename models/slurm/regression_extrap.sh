@@ -26,6 +26,7 @@ TAG="h4_regress_extrap"
 # Shipped model = the v18-orb HF artifact (orb arm, seed 42).
 CKPT="results/fermionic_pipeline/regression/h4_regress_v18_v18_orb_s42_model/regressor.pt"
 # Extended grid (brackets the training box R[0.5,3.0] t[0,300]); dt=0.05.
+N_ATOMS=4     # 4 = H4 (default), 2 = H2; sets molecule for datagen
 R_START=0.30; R_END=3.50; R_STEP=0.05
 T_MAX=600.0;  N_TIMES=12001; N_Q=500; N_WORKERS=16
 # Training box drawn on the heatmap:
@@ -40,6 +41,7 @@ while [ $# -gt 0 ]; do
     --all)        DO_DATA=true; DO_EVAL=true ;;
     --tag)        TAG="$2"; shift ;;
     --checkpoint) CKPT="$2"; shift ;;
+    --n_atoms)    N_ATOMS="$2"; shift ;;
     --exclude)    EXCLUDE_NODES="$2"; shift ;;
     -h|--help)    grep '^#' "$0" | sed 's/^# \?//'; exit 0 ;;
     *)            echo "unknown arg: $1"; exit 1 ;;
@@ -79,7 +81,7 @@ EOF
   cat >> "slurm/_extrap_data_${TAG}.sh" << EOF
 python3 -m fermionic_pipeline.data.regression_dataset \\
   --output ${DATA_PATH} \\
-  --n_atoms 4 \\
+  --n_atoms ${N_ATOMS} \\
   --r_start ${R_START} --r_end ${R_END} \\
   --r_step ${R_STEP} \\
   --t_max ${T_MAX} --n_times ${N_TIMES} --n_q ${N_Q} \\
