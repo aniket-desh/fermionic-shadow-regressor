@@ -98,12 +98,16 @@ def _bo_one_geometry(handle, model, R_npz, cx, t, x_cand, stride, fft_freq, args
     resid = y_true - prior_fsr(x_cand)
     sv_fsr = max(np.var(resid), 1e-6)
     sv_flat = max(np.var(y_true), 1e-6)
-    sig_std = max(float(np.std(y_true)), 1e-9)
-    fsr_rel_err = float(np.sqrt(np.mean(resid ** 2)) / sig_std)  # 0-sample FSR error, in units of std
+    # Relative RMS error of the dipole, RMSE / ||mu_exact||_RMS (DC included) — the
+    # same metric DFT dipole-moment benchmarks use (Hait & Head-Gordon, JCTC 2018:
+    # hybrid functionals ~5-6% regularized RMS error vs CCSD(T)/CBS). The pass/fail
+    # tolerance is therefore a target *relative error*, DFT-level (5%) by default.
+    rms = max(float(np.sqrt(np.mean(y_true ** 2))), 1e-9)
+    fsr_rel_err = float(np.sqrt(np.mean(resid ** 2)) / rms)   # 0-sample FSR relative error
     spec = np.abs(np.fft.rfft(mu_exact - mu_exact.mean()))
     E_peak = float(fft_freq[1:][np.argmax(spec[1:])])
     ls = args.length_scale if args.length_scale > 0 else float(np.clip(np.pi / (2 * E_peak), 0.3, 12.0))
-    tol = args.target_rmse if args.target_rmse > 0 else max(args.rel_rmse * float(np.std(y_true)), args.abs_rmse)
+    tol = args.target_rmse if args.target_rmse > 0 else max(args.rel_error * rms, args.abs_rmse)
     shot_sigma = args.noise_sigma
 
     fsr_c, flat_c = [], []
@@ -123,7 +127,7 @@ def _bo_one_geometry(handle, model, R_npz, cx, t, x_cand, stride, fft_freq, args
                         fsr_mean=gpf.predict(x_cand), flat_mean=gp0.predict(x_cand),
                         sampled=x_cand[uf, 0], sampled_y=y_true[uf])
     return dict(R=R, fsr=np.array(fsr_c), flat=np.array(flat_c), fit=disp,
-                fsr_rel_err=fsr_rel_err, rel_tol=args.rel_rmse)
+                fsr_rel_err=fsr_rel_err, rel_tol=args.rel_error)
 
 
 def main():
@@ -137,10 +141,14 @@ def main():
     ap.add_argument("--n_sweep", type=int, default=26, help="geometries in the samples-vs-R sweep")
     ap.add_argument("--sweep_lo", type=float, default=0.5)
     ap.add_argument("--sweep_hi", type=float, default=3.0)
-    ap.add_argument("--rel_rmse", type=float, default=0.4,
-                    help="target RMSE as a fraction of each trace's std (geometry-adaptive)")
-    ap.add_argument("--abs_rmse", type=float, default=2e-3)
-    ap.add_argument("--target_rmse", type=float, default=0.0, help="absolute RMSE override; 0 = rel_rmse*std")
+    ap.add_argument("--rel_error", type=float, default=0.05,
+                    help="target relative RMS error vs the exact dipole (0.05 = DFT-level, "
+                         "Hait & Head-Gordon JCTC 2018; try 0.01 for a stricter bar)")
+    ap.add_argument("--abs_rmse", type=float, default=1e-3, help="floor on the absolute RMSE target")
+    ap.add_argument("--target_rmse", type=float, default=0.0, help="absolute RMSE override; 0 = rel_error*||mu||")
+    ap.add_argument("--fit_tmax", type=float, default=150.0,
+                    help="time-axis limit for the fit-example panels (resolve oscillations / prior vs posterior)")
+    ap.add_argument("--molecule", default="H4", help="label for titles/filenames (H4 or H2)")
     ap.add_argument("--max_samples", type=int, default=40)
     ap.add_argument("--n_trials", type=int, default=40)
     ap.add_argument("--n_cand", type=int, default=1200)
@@ -184,41 +192,51 @@ def main():
                        fsr_ci=fsr_e.tolist(), fsr_rel_err=rel_err.tolist(),
                        rel_tol=rel_tol, max_samples=args.max_samples), f, indent=2)
 
+    mol = args.molecule
     nEx = len(examples)
-    fig = plt.figure(figsize=(4.6 * nEx, 9.6))
-    gs = fig.add_gridspec(3, nEx, height_ratios=[1.2, 1.2, 1.2], hspace=0.40, wspace=0.26)
+    fig = plt.figure(figsize=(4.7 * nEx, 9.8))
+    gs = fig.add_gridspec(3, nEx, height_ratios=[1.2, 1.2, 1.2], hspace=0.44, wspace=0.26)
+    # row 0: fit examples (zoom to fit_tmax so oscillations + prior-vs-posterior read)
     for k, ex in enumerate(examples):
         ax = fig.add_subplot(gs[0, k]); c = ex["fit"]
-        ax.plot(c["x"], c["y"], color="k", lw=0.9, label="target")
-        ax.plot(c["x"], c["prior"], "--", color="#16a34a", lw=1.0, alpha=0.85, label="FSR prior")
-        ax.plot(c["x"], c["flat_mean"], color="#9ca3af", lw=1.0, label="flat GP")
-        ax.scatter(c["sampled"], c["sampled_y"], s=10, color="#16a34a", zorder=3)
-        ax.set_title(f"H4, R = {ex['R']:.2f} Å   (FSR {ex['fsr'].mean():.0f} vs flat {ex['flat'].mean():.0f} samples)", fontsize=9)
-        ax.set_xlabel("t (a.u.)", fontsize=9)
+        ax.plot(c["x"], c["y"], color="k", lw=1.1, label="exact dipole", zorder=1)
+        ax.plot(c["x"], c["prior"], "--", color="#16a34a", lw=1.2, alpha=0.9, label="FSR prior", zorder=2)
+        ax.plot(c["x"], c["fsr_mean"], color="#16a34a", lw=1.5, label="FSR + GP posterior", zorder=3)
+        ax.plot(c["x"], c["flat_mean"], color="#9ca3af", lw=1.1, label="flat + GP posterior", zorder=2)
+        ax.scatter(c["sampled"], c["sampled_y"], s=16, facecolor="white", edgecolor="#16a34a",
+                   linewidth=0.9, zorder=4, label="sampled times")
+        ax.set_xlim(0, args.fit_tmax)
+        ax.set_title(f"{mol},  $R$ = {ex['R']:.2f} Å   "
+                     f"(FSR {ex['fsr'].mean():.0f} vs flat {ex['flat'].mean():.0f} samples)", fontsize=9)
+        ax.set_xlabel("time  $t$  (a.u.)", fontsize=9)
         if k == 0:
-            ax.set_ylabel(r"$\langle\mu_x(t)\rangle$", fontsize=10); ax.legend(fontsize=7, loc="best")
+            ax.set_ylabel(r"dipole  $\langle\mu_x(t)\rangle$  (a.u.)", fontsize=10)
+            ax.legend(fontsize=6.5, loc="best", framealpha=0.9)
     # row 1: samples-vs-R
     axs = fig.add_subplot(gs[1, :])
     axs.axhline(args.max_samples, color="#9ca3af", ls=":", lw=1, alpha=0.8)
     axs.plot(Rs, flat_m, "-o", color="#6b7280", ms=4, label="flat prior")
     axs.fill_between(Rs, fsr_m - fsr_e, fsr_m + fsr_e, color="#16a34a", alpha=0.2)
     axs.plot(Rs, fsr_m, "-o", color="#16a34a", ms=4, label="FSR prior (v18-orb)")
-    axs.set_ylabel("quantum samples\nto reach tolerance", fontsize=10)
-    axs.set_title("Dipole reconstruction sample efficiency vs bond length (H4, v18-orb prior)", fontsize=10)
+    axs.set_ylabel("quantum samples needed\n(to DFT-level accuracy)", fontsize=10)
+    axs.set_title(f"Quantum measurements to reconstruct the dipole vs bond length ({mol})", fontsize=10)
     axs.set_ylim(-1, args.max_samples + 3); axs.legend(fontsize=9, loc="center right")
-    # row 2: the smooth quantity that explains it — FSR 0-sample error vs R
+    # row 2: the physically-grounded panel — FSR dipole relative error vs the DFT bar
     axe = fig.add_subplot(gs[2, :], sharex=axs)
-    axe.plot(Rs, rel_err, "-o", color="#16a34a", ms=4, label="FSR prior error (0 samples)")
-    axe.axhline(rel_tol, color="#b91c1c", ls="--", lw=1.2, label=f"tolerance ({rel_tol:g}×std)")
-    axe.fill_between(Rs, 0, rel_tol, color="#16a34a", alpha=0.08)
-    axe.set_xlabel("R (Å)", fontsize=11)
-    axe.set_ylabel("FSR error / signal std", fontsize=10)
-    axe.set_title("Why: FSR prior accuracy vs bond length (below the line → 0 samples needed)", fontsize=10)
-    axe.legend(fontsize=9, loc="upper center")
+    axe.plot(Rs, 100 * rel_err, "-o", color="#16a34a", ms=4, label="FSR prior (0 samples)")
+    axe.axhline(100 * rel_tol, color="#b91c1c", ls="--", lw=1.4,
+                label=f"DFT-level dipole accuracy (~{100 * rel_tol:.0f}%, Hait & Head-Gordon 2018)")
+    axe.fill_between(Rs, 0, 100 * rel_tol, color="#16a34a", alpha=0.08)
+    axe.axhline(1.0, color="#6b7280", ls=":", lw=1.0, alpha=0.8, label="1% (stricter bar)")
+    axe.set_xlabel("bond length  $R$  (Å)", fontsize=11)
+    axe.set_ylabel("dipole relative RMS error (%)", fontsize=10)
+    axe.set_title("FSR dipole accuracy vs bond length  (below the DFT line → no quantum sampling needed)", fontsize=10)
+    axe.legend(fontsize=8, loc="upper center", ncol=3)
+    axe.set_ylim(0, max(8.0, 100 * float(np.nanmax(rel_err)) * 1.05))
     for ax in (axs, axe):
         for ex in examples:
             ax.axvline(ex["R"], color="k", ls="--", lw=0.6, alpha=0.35)
-    path = os.path.join(args.save_dir, "dipole_bo_sweep_h4.pdf")
+    path = os.path.join(args.save_dir, f"dipole_bo_sweep_{mol.lower()}.pdf")
     fig.savefig(path, bbox_inches="tight")
     plt.close(fig)
     print(f"[done] {path}")
