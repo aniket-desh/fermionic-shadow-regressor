@@ -136,8 +136,9 @@ def main():
     ap.add_argument("--data_h5", default="results/fermionic_pipeline/regression/h4_regress_v13/regression_targets.h5")
     ap.add_argument("--checkpoint", default="results/fermionic_pipeline/regression/h4_regress_v18_v18_orb_s42_model/regressor.pt")
     ap.add_argument("--save_dir", default="results/fermionic_pipeline/regression/h4_regress_v13/bo")
-    ap.add_argument("--R", type=float, nargs="+", default=[0.65, 1.50],
-                    help="bond lengths for the fit-example panels (one weak, one strong)")
+    ap.add_argument("--R", type=float, nargs="+", default=[1.40, 2.50],
+                    help="bond lengths for the fit-example panels (slower-oscillating R read better; "
+                         "1.4 is a DFT-level pass, 2.5 a clear fail)")
     ap.add_argument("--n_sweep", type=int, default=26, help="geometries in the samples-vs-R sweep")
     ap.add_argument("--sweep_lo", type=float, default=0.5)
     ap.add_argument("--sweep_hi", type=float, default=3.0)
@@ -149,6 +150,9 @@ def main():
     ap.add_argument("--fit_tmax", type=float, default=150.0,
                     help="time-axis limit for the fit-example panels (resolve oscillations / prior vs posterior)")
     ap.add_argument("--molecule", default="H4", help="label for titles/filenames (H4 or H2)")
+    ap.add_argument("--replot", default=None,
+                    help="path to a saved *_plotdata_*.pkl — skip all compute and just rebuild the "
+                         "figure (lets visual tweaks happen locally without the h5/checkpoint)")
     ap.add_argument("--max_samples", type=int, default=40)
     ap.add_argument("--n_trials", type=int, default=40)
     ap.add_argument("--n_cand", type=int, default=1200)
@@ -158,81 +162,97 @@ def main():
     args = ap.parse_args()
 
     os.makedirs(args.save_dir, exist_ok=True)
-    d = np.load(args.npz)
-    R_npz, cx = d["R_values"], d["c_x"]
-    handle = RegressionDatasetHandle(args.data_h5)
-    model, _ = load_checkpoint_model(args.checkpoint, device=torch.device(args.device))
-    t = handle.times
-    stride = max(1, len(t) // args.n_cand)
-    x_cand = t[::stride].reshape(-1, 1)
-    fft_freq = np.fft.rfftfreq(len(t), d=float(t[1] - t[0])) * 2 * np.pi
+    import pickle
 
-    def run(Rt, want_fit):
-        return _bo_one_geometry(handle, model, R_npz, cx, t, x_cand, stride, fft_freq, args, Rt, want_fit)
+    if args.replot:
+        with open(args.replot, "rb") as f:
+            P = pickle.load(f)
+        print(f"[replot] loaded {args.replot}")
+    else:
+        d = np.load(args.npz)
+        R_npz, cx = d["R_values"], d["c_x"]
+        handle = RegressionDatasetHandle(args.data_h5)
+        model, _ = load_checkpoint_model(args.checkpoint, device=torch.device(args.device))
+        t = handle.times
+        stride = max(1, len(t) // args.n_cand)
+        x_cand = t[::stride].reshape(-1, 1)
+        fft_freq = np.fft.rfftfreq(len(t), d=float(t[1] - t[0])) * 2 * np.pi
 
-    print("=== samples-vs-R sweep ===")
-    sweep = []
-    for Rt in np.round(np.linspace(args.sweep_lo, args.sweep_hi, args.n_sweep), 3):
-        r = run(float(Rt), want_fit=False)
-        sweep.append(r)
-        print(f"  R={r['R']:.2f}  FSR {r['fsr'].mean():4.1f}  flat {r['flat'].mean():4.1f}")
-    examples = [run(float(Rt), want_fit=True) for Rt in args.R]
+        def run(Rt, want_fit):
+            return _bo_one_geometry(handle, model, R_npz, cx, t, x_cand, stride, fft_freq, args, Rt, want_fit)
 
-    Rs = np.array([s["R"] for s in sweep])
-    fsr_m = np.array([s["fsr"].mean() for s in sweep])
-    flat_m = np.array([s["flat"].mean() for s in sweep])
-    fsr_e = np.array([1.96 * s["fsr"].std() / np.sqrt(len(s["fsr"])) for s in sweep])
-    rel_err = np.array([s["fsr_rel_err"] for s in sweep])
-    rel_tol = float(sweep[0]["rel_tol"])
+        print("=== samples-vs-R sweep ===")
+        sweep = []
+        for Rt in np.round(np.linspace(args.sweep_lo, args.sweep_hi, args.n_sweep), 3):
+            r = run(float(Rt), want_fit=False)
+            sweep.append(r)
+            print(f"  R={r['R']:.2f}  FSR {r['fsr'].mean():4.1f}  flat {r['flat'].mean():4.1f}  "
+                  f"rel_err {r['fsr_rel_err'] * 100:4.1f}%")
+        examples = [run(float(Rt), want_fit=True) for Rt in args.R]
+        P = dict(
+            Rs=np.array([s["R"] for s in sweep]),
+            fsr_m=np.array([s["fsr"].mean() for s in sweep]),
+            flat_m=np.array([s["flat"].mean() for s in sweep]),
+            fsr_e=np.array([1.96 * s["fsr"].std() / np.sqrt(len(s["fsr"])) for s in sweep]),
+            rel_err=np.array([s["fsr_rel_err"] for s in sweep]),
+            rel_tol=float(sweep[0]["rel_tol"]), max_samples=args.max_samples,
+            molecule=args.molecule, fit_tmax=args.fit_tmax,
+            examples=[dict(R=ex["R"], fsr_mean=float(ex["fsr"].mean()),
+                           flat_mean=float(ex["flat"].mean()), fit=ex["fit"]) for ex in examples],
+        )
+        dump = os.path.join(args.save_dir, f"dipole_bo_plotdata_{args.molecule.lower()}.pkl")
+        with open(dump, "wb") as f:
+            pickle.dump(P, f)
+        print(f"[saved] plot data -> {dump}   (replot locally: --replot {dump})")
 
-    # persist sweep arrays so the figure can be replotted/retuned without re-running
-    import json
-    with open(os.path.join(args.save_dir, "dipole_bo_sweep.json"), "w") as f:
-        json.dump(dict(R=Rs.tolist(), fsr=fsr_m.tolist(), flat=flat_m.tolist(),
-                       fsr_ci=fsr_e.tolist(), fsr_rel_err=rel_err.tolist(),
-                       rel_tol=rel_tol, max_samples=args.max_samples), f, indent=2)
+    Rs, fsr_m, flat_m = P["Rs"], P["fsr_m"], P["flat_m"]
+    fsr_e, rel_err, rel_tol = P["fsr_e"], P["rel_err"], P["rel_tol"]
+    examples = P["examples"]
+    mol, fit_tmax, max_samples = P["molecule"], P["fit_tmax"], P["max_samples"]
 
-    mol = args.molecule
     nEx = len(examples)
-    fig = plt.figure(figsize=(4.7 * nEx, 9.8))
-    gs = fig.add_gridspec(3, nEx, height_ratios=[1.2, 1.2, 1.2], hspace=0.44, wspace=0.26)
-    # row 0: fit examples (zoom to fit_tmax so oscillations + prior-vs-posterior read)
+    fig = plt.figure(figsize=(4.8 * nEx, 9.9))
+    gs = fig.add_gridspec(3, nEx, height_ratios=[1.15, 1.2, 1.2], hspace=0.46, wspace=0.26)
+    # row 0: fit examples (zoom to fit_tmax). The legend is hoisted to a single
+    # figure legend at the top so it never overlaps the (dense) traces.
+    fit_handles = None
     for k, ex in enumerate(examples):
         ax = fig.add_subplot(gs[0, k]); c = ex["fit"]
-        ax.plot(c["x"], c["y"], color="k", lw=1.1, label="exact dipole", zorder=1)
-        ax.plot(c["x"], c["prior"], "--", color="#16a34a", lw=1.2, alpha=0.9, label="FSR prior", zorder=2)
-        ax.plot(c["x"], c["fsr_mean"], color="#16a34a", lw=1.5, label="FSR + GP posterior", zorder=3)
-        ax.plot(c["x"], c["flat_mean"], color="#9ca3af", lw=1.1, label="flat + GP posterior", zorder=2)
-        ax.scatter(c["sampled"], c["sampled_y"], s=16, facecolor="white", edgecolor="#16a34a",
-                   linewidth=0.9, zorder=4, label="sampled times")
-        ax.set_xlim(0, args.fit_tmax)
+        ax.plot(c["x"], c["y"], color="k", lw=1.0, label="exact dipole", zorder=1)
+        ax.plot(c["x"], c["prior"], "--", color="#16a34a", lw=1.1, alpha=0.9, label="FSR prior", zorder=2)
+        ax.plot(c["x"], c["fsr_mean"], color="#16a34a", lw=1.4, label="FSR + GP posterior", zorder=3)
+        ax.plot(c["x"], c["flat_mean"], color="#9ca3af", lw=1.0, label="flat + GP posterior", zorder=2)
+        ax.scatter(c["sampled"], c["sampled_y"], s=14, facecolor="white", edgecolor="#16a34a",
+                   linewidth=0.8, zorder=4, label="sampled times")
+        ax.set_xlim(0, fit_tmax)
         ax.set_title(f"{mol},  $R$ = {ex['R']:.2f} Å   "
-                     f"(FSR {ex['fsr'].mean():.0f} vs flat {ex['flat'].mean():.0f} samples)", fontsize=9)
+                     f"(FSR {ex['fsr_mean']:.0f} vs flat {ex['flat_mean']:.0f} samples)", fontsize=9)
         ax.set_xlabel("time  $t$  (a.u.)", fontsize=9)
         if k == 0:
             ax.set_ylabel(r"dipole  $\langle\mu_x(t)\rangle$  (a.u.)", fontsize=10)
-            ax.legend(fontsize=6.5, loc="best", framealpha=0.9)
+            fit_handles = ax.get_legend_handles_labels()
+    fig.legend(*fit_handles, loc="upper center", ncol=5, fontsize=8, frameon=True,
+               bbox_to_anchor=(0.5, 1.005))
     # row 1: samples-vs-R
     axs = fig.add_subplot(gs[1, :])
-    axs.axhline(args.max_samples, color="#9ca3af", ls=":", lw=1, alpha=0.8)
+    axs.axhline(max_samples, color="#9ca3af", ls=":", lw=1, alpha=0.8)
     axs.plot(Rs, flat_m, "-o", color="#6b7280", ms=4, label="flat prior")
     axs.fill_between(Rs, fsr_m - fsr_e, fsr_m + fsr_e, color="#16a34a", alpha=0.2)
     axs.plot(Rs, fsr_m, "-o", color="#16a34a", ms=4, label="FSR prior (v18-orb)")
     axs.set_ylabel("quantum samples needed\n(to DFT-level accuracy)", fontsize=10)
     axs.set_title(f"Quantum measurements to reconstruct the dipole vs bond length ({mol})", fontsize=10)
-    axs.set_ylim(-1, args.max_samples + 3); axs.legend(fontsize=9, loc="center right")
-    # row 2: the physically-grounded panel — FSR dipole relative error vs the DFT bar
+    axs.set_ylim(-1, max_samples + 3); axs.legend(fontsize=9, loc="center right", framealpha=0.9)
+    # row 2: physically-grounded panel — FSR dipole relative error vs the DFT bar
     axe = fig.add_subplot(gs[2, :], sharex=axs)
-    axe.plot(Rs, 100 * rel_err, "-o", color="#16a34a", ms=4, label="FSR prior (0 samples)")
-    axe.axhline(100 * rel_tol, color="#b91c1c", ls="--", lw=1.4,
-                label=f"DFT-level dipole accuracy (~{100 * rel_tol:.0f}%, Hait & Head-Gordon 2018)")
+    axe.plot(Rs, 100 * rel_err, "-o", color="#16a34a", ms=4, label="FSR prior error (0 samples)")
+    axe.axhline(100 * rel_tol, color="#b91c1c", ls="--", lw=1.4, label=f"DFT-level (~{100 * rel_tol:.0f}%)")
     axe.fill_between(Rs, 0, 100 * rel_tol, color="#16a34a", alpha=0.08)
-    axe.axhline(1.0, color="#6b7280", ls=":", lw=1.0, alpha=0.8, label="1% (stricter bar)")
+    axe.axhline(1.0, color="#6b7280", ls=":", lw=1.0, alpha=0.8, label="1% (stricter)")
     axe.set_xlabel("bond length  $R$  (Å)", fontsize=11)
-    axe.set_ylabel("dipole relative RMS error (%)", fontsize=10)
-    axe.set_title("FSR dipole accuracy vs bond length  (below the DFT line → no quantum sampling needed)", fontsize=10)
-    axe.legend(fontsize=8, loc="upper center", ncol=3)
-    axe.set_ylim(0, max(8.0, 100 * float(np.nanmax(rel_err)) * 1.05))
+    axe.set_ylabel("dipole relative\nRMS error (%)", fontsize=10)
+    axe.set_title("FSR dipole accuracy vs bond length  (DFT-level bar: Hait & Head-Gordon 2018)", fontsize=10)
+    axe.legend(fontsize=8, loc="upper left", framealpha=0.9)
+    axe.set_ylim(0, min(14.0, 100 * float(np.nanmax(rel_err)) * 1.05))
     for ax in (axs, axe):
         for ex in examples:
             ax.axvline(ex["R"], color="k", ls="--", lw=0.6, alpha=0.35)
