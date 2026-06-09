@@ -164,6 +164,17 @@ cd "$SCRATCH/generative-quantum-states"
 export PYTHONUNBUFFERED=1
 EOF
   cat >> "slurm/_h2_diag_${ST}.sh" << EOF
+echo "=== H2 frequency scale (sets --omega_op_floor; current floor=${OMEGA_FLOOR}) ==="
+python3 - << 'PYEOF'
+import h5py, numpy as np
+with h5py.File("${DATA_PATH}", "r") as f:
+    w = f["omega_op"][:]
+    R = f["R_values"][:]
+    print("omega_op  min %.3f  max %.3f  mean %.3f  median %.3f" % (w.min(), w.max(), float(np.mean(w)), float(np.median(w))))
+    print("  at R_min=%.2f: omega_op=%.3f   at R_max=%.2f: omega_op=%.3f" % (R[0], w[0], R[-1], w[-1]))
+    print("  -> set --omega_op_floor near this scale (8.0 was the H4 value)")
+PYEOF
+echo "=== composition diagnostic (envelope vs phase by R-bin) ==="
 python3 -m fermionic_pipeline.eval.composition_diagnostic \\
   --data_path ${DATA_PATH} \\
   --checkpoint ${MODEL_DIR}/regressor.pt \\
