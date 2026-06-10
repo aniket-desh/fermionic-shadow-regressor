@@ -137,7 +137,7 @@ if [ "$FETCH_LOGS" = true ]; then
     BEFORE=$(find "${LOCAL_DIR}/logs/" -maxdepth 1 -type f | wc -l | tr -d ' ')
     # Per-prefix include patterns; when --which is set, also require a token (any-of).
     LOG_INCLUDES=()
-    for prefix in ferm-pipeline_ exact_gen_ clf_ eval_ reg_ dipole_ extrap_; do
+    for prefix in ferm-pipeline_ exact_gen_ clf_ eval_ reg_ dipole_ extrap_ h2_; do
         if [ ${#WHICH_TOKENS[@]} -gt 0 ]; then
             for tok in "${WHICH_TOKENS[@]}"; do
                 LOG_INCLUDES+=(--include="${prefix}*${tok}*")
@@ -153,7 +153,7 @@ if [ "$FETCH_LOGS" = true ]; then
         "${LOCAL_DIR}/logs/"
     AFTER=$(find "${LOCAL_DIR}/logs/" -maxdepth 1 -type f | wc -l | tr -d ' ')
     echo "  log files: ${BEFORE} -> ${AFTER} ($((AFTER - BEFORE)) new)"
-    for prefix in ferm-pipeline_ exact_gen_ clf_ eval_ reg_ dipole_ extrap_; do
+    for prefix in ferm-pipeline_ exact_gen_ clf_ eval_ reg_ dipole_ extrap_ h2_; do
         n=$(find "${LOCAL_DIR}/logs/" -maxdepth 1 -name "${prefix}*" -type f | wc -l | tr -d ' ')
         printf "    %-16s %d\n" "${prefix}*" "${n}"
     done
