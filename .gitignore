@@ -197,7 +197,7 @@ models/logs/
 
 # Generated per-run slurm scripts (drivers write slurm/_<tag>.sh; only the
 # tracked drivers are committed, never the generated ones)
-models/slurm/_*.sh
+models/slurm/
 
 # Manuscript — worked on separately (Overleaf), kept out of the code repo
 paper/
