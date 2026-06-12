@@ -199,8 +199,12 @@ models/logs/
 # tracked drivers are committed, never the generated ones)
 models/slurm/_*.sh
 
-# Manuscript draft — worked on separately, kept out of the code repo
+# Manuscript — worked on separately (Overleaf), kept out of the code repo
+paper/
 paper.tex
+# Internal research docs — local only, not for the public repo
+BRIEFING.md
+models/REGRESSION_GUIDE.md
 *.aux
 *.bbl
 *.blg
