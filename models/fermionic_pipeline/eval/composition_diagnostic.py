@@ -142,6 +142,10 @@ def main():
                         help="Override; default uses payload's test_r_indices.")
     parser.add_argument("--amp_floor_frac", type=float, default=0.05,
                         help="Ignore observables whose dominant peak < frac × bank-max.")
+    parser.add_argument("--omega_op_source", type=str, default="dataset",
+                        choices=["dataset", "train-interp"],
+                        help="train-interp: non-oracle omega_op interpolated from "
+                             "the checkpoint's training geometries only.")
     args = parser.parse_args()
 
     os.makedirs(args.save_dir, exist_ok=True)
@@ -149,6 +153,12 @@ def main():
 
     handle = RegressionDatasetHandle(args.data_path)
     model, payload = load_checkpoint_model(args.checkpoint, device=device)
+
+    omega_src = None
+    if args.omega_op_source == "train-interp":
+        from fermionic_pipeline.eval.omega_source import OmegaOpSource
+        omega_src = OmegaOpSource("train-interp", handle=handle, payload=payload)
+        print("[info] omega_op source: train-interp (non-oracle)")
 
     if args.test_r_indices is not None:
         test_r_indices = args.test_r_indices
@@ -159,7 +169,10 @@ def main():
     for r_idx in test_r_indices:
         R = float(handle.R_values[r_idx])
         orb_e = handle.hf_orbital_energies[r_idx] if handle.hf_orbital_energies is not None else None
-        omega_op = float(handle.omega_op[r_idx]) if handle.omega_op is not None else None
+        if omega_src is not None:
+            omega_op = omega_src.value(r_idx=r_idx)
+        else:
+            omega_op = float(handle.omega_op[r_idx]) if handle.omega_op is not None else None
 
         D_model = predict_signal_matrix(model, R, handle.times, device,
                                         orb_energies=orb_e, omega_op=omega_op)

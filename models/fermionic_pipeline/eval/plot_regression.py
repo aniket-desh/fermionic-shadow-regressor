@@ -30,7 +30,22 @@ def _get_orb_energies(handle, r_idx):
     return None
 
 
+# Module-level omega_op source override. When set (via set_omega_source), all
+# helpers in this module — and the scripts that import them (extrapolation
+# heatmap, dipole experiment) — resolve omega_op through it instead of reading
+# the evaluated geometry's own dataset value. See eval/omega_source.py for why
+# the dataset value is an oracle input at held-out geometries.
+OMEGA_SOURCE = None
+
+
+def set_omega_source(source):
+    global OMEGA_SOURCE
+    OMEGA_SOURCE = source
+
+
 def _get_omega_op(handle, r_idx):
+    if OMEGA_SOURCE is not None:
+        return OMEGA_SOURCE.value(r_idx=r_idx)
     if handle.omega_op is not None:
         return float(handle.omega_op[r_idx])
     return None
@@ -427,6 +442,10 @@ def main():
     parser.add_argument("--save_dir", type=str, required=True)
     parser.add_argument("--device", type=str, default=None)
     parser.add_argument("--ljung_box_p", type=float, default=0.06)
+    parser.add_argument("--omega_op_source", type=str, default="dataset",
+                        choices=["dataset", "train-interp"],
+                        help="train-interp: non-oracle omega_op interpolated from "
+                             "the checkpoint's training geometries only.")
     args = parser.parse_args()
 
     os.makedirs(args.save_dir, exist_ok=True)
@@ -435,6 +454,11 @@ def main():
     handle = RegressionDatasetHandle(args.data_path)
     model, payload = load_checkpoint_model(args.checkpoint, device=device)
     test_r_indices = payload.get("test_r_indices", list(range(len(handle.R_values))))
+
+    if args.omega_op_source == "train-interp":
+        from fermionic_pipeline.eval.omega_source import OmegaOpSource
+        set_omega_source(OmegaOpSource("train-interp", handle=handle, payload=payload))
+        print("[info] omega_op source: train-interp (non-oracle)")
 
     print(f"[info] {len(test_r_indices)} test geometries, K={handle.n_observables}")
 

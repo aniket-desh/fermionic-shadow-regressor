@@ -159,6 +159,10 @@ def main():
     ap.add_argument("--length_scale", type=float, default=0.0, help="0 = auto per-R from dominant freq")
     ap.add_argument("--noise_sigma", type=float, default=4e-3)
     ap.add_argument("--device", default="cpu")
+    ap.add_argument("--omega_op_source", type=str, default="dataset",
+                    choices=["dataset", "train-interp"],
+                    help="train-interp: non-oracle omega_op interpolated from "
+                         "the checkpoint's training geometries only.")
     args = ap.parse_args()
 
     os.makedirs(args.save_dir, exist_ok=True)
@@ -172,7 +176,12 @@ def main():
         d = np.load(args.npz)
         R_npz, cx = d["R_values"], d["c_x"]
         handle = RegressionDatasetHandle(args.data_h5)
-        model, _ = load_checkpoint_model(args.checkpoint, device=torch.device(args.device))
+        model, payload = load_checkpoint_model(args.checkpoint, device=torch.device(args.device))
+        if args.omega_op_source == "train-interp":
+            from fermionic_pipeline.eval.omega_source import OmegaOpSource
+            from fermionic_pipeline.eval import plot_regression as _pr
+            _pr.set_omega_source(OmegaOpSource("train-interp", handle=handle, payload=payload))
+            print("[info] omega_op source: train-interp (non-oracle)")
         t = handle.times
         stride = max(1, len(t) // args.n_cand)
         x_cand = t[::stride].reshape(-1, 1)

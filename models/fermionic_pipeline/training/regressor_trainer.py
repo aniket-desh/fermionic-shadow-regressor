@@ -584,6 +584,13 @@ def main():
         "train_config": asdict(train_cfg),
         "train_r_indices": train_r.tolist(),
         "test_r_indices": test_r.tolist(),
+        # omega_op at TRAINING geometries only: lets eval-time code build a
+        # non-oracle interpolated ceiling without re-opening the training h5
+        # (see eval/omega_source.py).
+        "train_omega_op": (
+            np.asarray(handle.omega_op)[train_r].tolist()
+            if handle.omega_op is not None else None
+        ),
         "R_values": handle.R_values.tolist(),
         "times": handle.times.tolist(),
         "observable_keys": [list(k) for k in handle.observable_keys],

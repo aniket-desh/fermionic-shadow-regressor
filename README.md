@@ -61,24 +61,46 @@ python -m fermionic_pipeline.training.regressor_trainer \
 ```
 
 **3. Evaluate** held-out accuracy, render the summary plots, and run the
-amplitude-versus-phase composition diagnostic:
+amplitude-versus-phase composition diagnostic. The dataset's `omega_op` field is
+derived from each geometry's exact signal, so held-out evaluations should pass
+`--omega_op_source train-interp`, which interpolates the bandwidth ceiling from the
+checkpoint's training geometries only (no information from held-out signals):
 
 ```bash
 python -m fermionic_pipeline.eval.regressor_eval \
   --data_path results/regression_targets.h5 \
-  --checkpoint results/fsr_h4/regressor.pt --save_dir results/fsr_h4/eval
+  --checkpoint results/fsr_h4/regressor.pt --save_dir results/fsr_h4/eval \
+  --omega_op_source train-interp
 
 python -m fermionic_pipeline.eval.plot_regression \
   --data_path results/regression_targets.h5 \
-  --checkpoint results/fsr_h4/regressor.pt --save_dir results/fsr_h4/plots
+  --checkpoint results/fsr_h4/regressor.pt --save_dir results/fsr_h4/plots \
+  --omega_op_source train-interp
 
 python -m fermionic_pipeline.eval.composition_diagnostic \
   --data_path results/regression_targets.h5 \
-  --checkpoint results/fsr_h4/regressor.pt --save_dir results/fsr_h4/eval
+  --checkpoint results/fsr_h4/regressor.pt --save_dir results/fsr_h4/eval \
+  --omega_op_source train-interp
 ```
 
 To probe extrapolation, generate a dataset on a wider grid (e.g. R ∈ [0.3, 3.5] Å,
 t ∈ [0, 600] a.u.) with the same datagen command and evaluate the trained checkpoint
-on it via `fermionic_pipeline.eval.extrapolation_heatmap`.
+on it via `fermionic_pipeline.eval.extrapolation_heatmap` (pass
+`--omega_op_source train-interp --train_data_path <training h5>` for the non-oracle
+ceiling there too).
 
 Each entrypoint documents its full flag set under `--help`.
+
+## Tests
+
+Quick smoke tests (model forward pass, checkpoint round-trip, `omega_op`
+computation, and the non-oracle property of the interpolated ceiling) run in a few
+seconds from `models/`:
+
+```bash
+python -m pytest tests/ -q
+```
+
+## License
+
+MIT (see `LICENSE`).

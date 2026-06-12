@@ -34,13 +34,31 @@ def main():
                     help="t bounds the model was trained on (box edges)")
     ap.add_argument("--window", type=int, default=20)
     ap.add_argument("--device", default=None)
+    ap.add_argument("--omega_op_source", type=str, default="dataset",
+                    choices=["dataset", "train-interp"],
+                    help="train-interp: non-oracle omega_op interpolated from the "
+                         "TRAINING dataset's training geometries (requires "
+                         "--train_data_path; out-of-range R is clamped to edge values).")
+    ap.add_argument("--train_data_path", type=str, default=None,
+                    help="The dataset the checkpoint was trained on; required for "
+                         "--omega_op_source train-interp on an extended grid.")
     args = ap.parse_args()
 
     os.makedirs(args.save_dir, exist_ok=True)
     device = torch.device(args.device or ("cuda" if torch.cuda.is_available() else "cpu"))
 
     handle = RegressionDatasetHandle(args.data_path)
-    model, _ = load_checkpoint_model(args.checkpoint, device=device)
+    model, payload = load_checkpoint_model(args.checkpoint, device=device)
+
+    if args.omega_op_source == "train-interp":
+        if args.train_data_path is None:
+            raise SystemExit("--omega_op_source train-interp requires --train_data_path")
+        from fermionic_pipeline.eval.omega_source import OmegaOpSource
+        from fermionic_pipeline.eval import plot_regression as _pr
+        train_handle = RegressionDatasetHandle(args.train_data_path)
+        _pr.set_omega_source(OmegaOpSource(
+            "train-interp", handle=handle, payload=payload, train_handle=train_handle))
+        print("[info] omega_op source: train-interp (non-oracle, from training dataset)")
     # plot EVERY geometry in the (extended) grid, not a held-out test split
     all_idx = list(range(len(handle.R_values)))
     print(f"[info] extrapolation heatmap: {len(all_idx)} geometries, "
