@@ -46,6 +46,8 @@ from fermionic_pipeline.data.generate_shadows import (
     _apply_standard_majorana_givens,
     _zpow,
     build_hydrogen_chain_hamiltonian,
+    build_molecule_hamiltonian,
+    molecule_n_electrons,
     compute_hf_orbital_energies,
     prepare_initial_state,
     time_evolve,
@@ -475,29 +477,30 @@ def _compute_time_chunk(args):
 
 def _process_geometry(args):
     """Worker for multiprocessing: process one geometry."""
-    # Support both old 10-tuple and new 13-tuple with Trotter params
+    # Support both old 10-tuple and new 13-tuple with Trotter params.
+    # Position 3 carries the molecule spec (int n_atoms or "lih"-style name).
     if len(args) == 10:
-        (r_idx, R, n_atoms, times, n_qubits, K,
+        (r_idx, R, molecule, times, n_qubits, K,
          decompositions, vec_meta, bit_array, shadow_coeff) = args
         use_trotter, trotter_dt, trotter_order = False, None, 2
     else:
-        (r_idx, R, n_atoms, times, n_qubits, K,
+        (r_idx, R, molecule, times, n_qubits, K,
          decompositions, vec_meta, bit_array, shadow_coeff,
          use_trotter, trotter_dt, trotter_order) = args
 
     t_start = _time.time()
 
     if use_trotter:
-        H_sparse, nq, H_pl = build_hydrogen_chain_hamiltonian(
-            n_atoms, float(R), return_pennylane=True
+        H_sparse, nq, H_pl = build_molecule_hamiltonian(
+            molecule, float(R), return_pennylane=True
         )
     else:
-        H_sparse, nq = build_hydrogen_chain_hamiltonian(n_atoms, float(R))
+        H_sparse, nq = build_molecule_hamiltonian(molecule, float(R))
 
     H_dense = H_sparse.toarray().astype(np.complex128)
     eigvals = np.sort(np.linalg.eigvalsh(H_dense).real)
 
-    psi_0, _ = prepare_initial_state(H_sparse, n_qubits, n_electrons=n_atoms)
+    psi_0, _ = prepare_initial_state(H_sparse, n_qubits, n_electrons=molecule_n_electrons(molecule))
 
     if use_trotter:
         state_dict = time_evolve_trotter(
@@ -526,6 +529,7 @@ def _process_geometry(args):
 @dataclass
 class RegressionDatasetConfig:
     n_atoms: int = 4
+    molecule: Optional[str] = None  # None -> "h{n_atoms}"; e.g. "lih" for CAS(2,4)
     r_start: float = 0.5
     r_end: float = 3.0
     r_step: float = 0.05
@@ -541,6 +545,10 @@ class RegressionDatasetConfig:
     use_trotter: bool = False
     trotter_dt: Optional[float] = None
     trotter_order: int = 2
+
+    def __post_init__(self):
+        if self.molecule is None:
+            self.molecule = f"h{self.n_atoms}"
 
     @property
     def R_values(self) -> np.ndarray:
@@ -666,7 +674,7 @@ def generate_regression_dataset(
     times = config.times
     n_R = len(R_values)
 
-    H_probe, n_qubits = build_hydrogen_chain_hamiltonian(config.n_atoms, float(R_values[0]))
+    H_probe, n_qubits = build_molecule_hamiltonian(config.molecule, float(R_values[0]))
     n_modes = 2 * n_qubits
     k = 1
     all_keys = majorana_2pt_keys(n_modes)
@@ -729,7 +737,7 @@ def generate_regression_dataset(
     print(f"[info] computing HF orbital energies...", end=" ", flush=True)
     t0 = _time.time()
     all_hf_energies = np.array([
-        compute_hf_orbital_energies(config.n_atoms, float(R))
+        compute_hf_orbital_energies(config.molecule, float(R))
         for R in R_values
     ])
     n_orb = all_hf_energies.shape[1]
@@ -741,7 +749,7 @@ def generate_regression_dataset(
         from multiprocessing import Pool
 
         worker_args = [
-            (r_idx, R, config.n_atoms, times, n_qubits, K,
+            (r_idx, R, config.molecule, times, n_qubits, K,
              decompositions, vec_meta, bit_array, shadow_coeff,
              config.use_trotter, config.trotter_dt, config.trotter_order)
             for r_idx, R in enumerate(R_values)
@@ -767,6 +775,7 @@ def generate_regression_dataset(
         # Write to HDF5
         with h5py.File(output_path, "w") as f:
             f.attrs["n_atoms"] = config.n_atoms
+            f.attrs["molecule"] = config.molecule
             f.attrs["n_qubits"] = n_qubits
             f.attrs["n_modes"] = n_modes
             f.attrs["n_observables"] = K
@@ -800,6 +809,7 @@ def generate_regression_dataset(
 
         with h5py.File(output_path, "w") as f:
             f.attrs["n_atoms"] = config.n_atoms
+            f.attrs["molecule"] = config.molecule
             f.attrs["n_qubits"] = n_qubits
             f.attrs["n_modes"] = n_modes
             f.attrs["n_observables"] = K
@@ -831,16 +841,17 @@ def generate_regression_dataset(
                 t0 = _time.time()
 
                 if config.use_trotter:
-                    H_sparse, nq, H_pl = build_hydrogen_chain_hamiltonian(
-                        config.n_atoms, float(R), return_pennylane=True
+                    H_sparse, nq, H_pl = build_molecule_hamiltonian(
+                        config.molecule, float(R), return_pennylane=True
                     )
                 else:
-                    H_sparse, nq = build_hydrogen_chain_hamiltonian(config.n_atoms, float(R))
+                    H_sparse, nq = build_molecule_hamiltonian(config.molecule, float(R))
 
                 H_dense = H_sparse.toarray().astype(np.complex128)
                 eigvals_ds[r_idx] = np.sort(np.linalg.eigvalsh(H_dense).real)
 
-                psi_0, _ = prepare_initial_state(H_sparse, n_qubits, n_electrons=config.n_atoms)
+                psi_0, _ = prepare_initial_state(
+                    H_sparse, n_qubits, n_electrons=molecule_n_electrons(config.molecule))
 
                 if config.use_trotter:
                     state_dict = time_evolve_trotter(
@@ -911,6 +922,7 @@ def load_config_defaults(config_path: str) -> RegressionDatasetConfig:
     dc = cfg["data"]
     return RegressionDatasetConfig(
         n_atoms=dc["n_atoms"],
+        molecule=dc.get("molecule"),
         r_start=dc["r_start"],
         r_end=dc["r_end"],
         r_step=dc["r_step"],
@@ -924,6 +936,9 @@ def main():
     parser.add_argument("--exact_conditional", type=str, default=None,
                         help="Path to exact conditional HDF5 (reuses Q library + probs)")
     parser.add_argument("--n_atoms", type=int, default=None)
+    parser.add_argument("--molecule", type=str, default=None,
+                        help="Molecule spec: 'hN' (H chain, default from n_atoms) or a named "
+                             "active-space molecule, e.g. 'lih' (CAS(2,4), 8 qubits).")
     parser.add_argument("--r_start", type=float, default=None)
     parser.add_argument("--r_end", type=float, default=None)
     parser.add_argument("--r_step", type=float, default=None)
@@ -959,6 +974,11 @@ def main():
         value = getattr(args, field)
         if value is not None:
             setattr(config, field, value)
+    # molecule precedence: CLI --molecule wins; else re-derive if n_atoms changed
+    if args.molecule is not None:
+        config.molecule = args.molecule
+    elif args.n_atoms is not None:
+        config.molecule = f"h{config.n_atoms}"
     config.n_q = args.n_q
     config.seed = args.seed
     config.use_trotter = args.use_trotter

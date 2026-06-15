@@ -297,6 +297,100 @@ def build_hydrogen_chain_hamiltonian(n_atoms, R, return_pennylane=False):
     return H_sparse, n_qubits
 
 
+# ── Generalized molecule builder (H-chains + named active-space molecules) ──
+#
+# Named molecules carry their active space so the FSR stack runs unchanged at a
+# fixed qubit count. LiH CAS(2,4) = 8 qubits = 120 Majorana channels, identical
+# interface to H4. The line-spectrum pre-flight (line_spectrum_preflight.py)
+# dictates the per-molecule sampling grid before any of this is generated.
+# Each named molecule carries its active space AND a geometry parameterized by a
+# SINGLE stretch coordinate R, so every in-scope system is 1-dof (the regime the
+# propositions and the orb-feature input are designed for). The line-spectrum
+# pre-flight dictates each molecule's sampling grid before training.
+#   geom "diatomic"         -> [origin, (R,0,0)]                       (LiH, N2)
+#   geom "linear_symmetric" -> [origin, (R,0,0), (-R,0,0)]             (BeH2)
+#   geom "bent_symmetric"   -> central atom + 2 H at fixed angle, bond R  (H2O)
+# Defaults are CAS(ae, ao=4) -> 8 qubits / 120 channels (the H4/LiH interface),
+# for a clean cross-molecule "same recipe" comparison.
+_MOLECULE_SPECS = {
+    "lih":  dict(symbols=["Li", "H"],      charge=0, mult=1, ae=2, ao=4, geom="diatomic"),
+    "n2":   dict(symbols=["N", "N"],       charge=0, mult=1, ae=4, ao=4, geom="diatomic"),
+    "beh2": dict(symbols=["Be", "H", "H"], charge=0, mult=1, ae=4, ao=4, geom="linear_symmetric"),
+    "h2o":  dict(symbols=["O", "H", "H"],  charge=0, mult=1, ae=4, ao=4, geom="bent_symmetric", angle=104.5),
+}
+
+
+def _molecule_coordinates(spec, R):
+    """Flattened atom coordinates for the molecule's single stretch coordinate R
+    (passed straight to molecular_hamiltonian, same convention as the H chain)."""
+    geom = spec["geom"]
+    if geom == "diatomic":
+        coords = [[0.0, 0.0, 0.0], [R, 0.0, 0.0]]
+    elif geom == "linear_symmetric":
+        coords = [[0.0, 0.0, 0.0], [R, 0.0, 0.0], [-R, 0.0, 0.0]]
+    elif geom == "bent_symmetric":
+        half = np.deg2rad(spec["angle"]) / 2.0
+        coords = [[0.0, 0.0, 0.0],
+                  [R * np.cos(half),  R * np.sin(half), 0.0],
+                  [R * np.cos(half), -R * np.sin(half), 0.0]]
+    else:
+        raise ValueError(f"unknown geometry {geom!r}")
+    return np.array(coords).flatten()
+
+
+def _parse_molecule(molecule):
+    """Normalize a molecule spec to (kind, payload).
+
+    Accepts an int n_atoms or "hN" (linear H chain, full active space) or a name
+    in _MOLECULE_SPECS (e.g. "lih", "beh2", "h2o", "n2").
+    """
+    if isinstance(molecule, (int, np.integer)):
+        return "hchain", int(molecule)
+    name = str(molecule).strip().lower()
+    if name.startswith("h") and name[1:].isdigit():
+        return "hchain", int(name[1:])
+    if name in _MOLECULE_SPECS:
+        return "named", name
+    raise ValueError(
+        f"unknown molecule {molecule!r}; expected an int, 'hN', or one of "
+        f"{sorted(_MOLECULE_SPECS)}"
+    )
+
+
+def molecule_n_electrons(molecule):
+    """Active-space electron count = the n_electrons for prepare_initial_state."""
+    kind, payload = _parse_molecule(molecule)
+    if kind == "hchain":
+        return payload  # full active space: n_electrons = n_atoms
+    return _MOLECULE_SPECS[payload]["ae"]
+
+
+def build_molecule_hamiltonian(molecule, R, return_pennylane=False):
+    """Generalized Hamiltonian builder; same signature as the H-chain builder.
+
+    Linear H chains delegate to build_hydrogen_chain_hamiltonian so the existing
+    pipeline is byte-for-byte unchanged. Named molecules build the active-space
+    Hamiltonian through the SAME molecular_hamiltonian convention (coordinates
+    passed straight through, sto-3g), so any call site can swap one for the other.
+    """
+    kind, payload = _parse_molecule(molecule)
+    if kind == "hchain":
+        return build_hydrogen_chain_hamiltonian(payload, R, return_pennylane)
+
+    import pennylane as qml
+
+    spec = _MOLECULE_SPECS[payload]
+    coordinates = _molecule_coordinates(spec, R)
+    H, n_qubits = qml.qchem.molecular_hamiltonian(
+        spec["symbols"], coordinates, charge=spec["charge"], mult=spec["mult"],
+        basis="sto-3g", active_electrons=spec["ae"], active_orbitals=spec["ao"],
+    )
+    H_sparse = H.sparse_matrix()
+    if return_pennylane:
+        return H_sparse, n_qubits, H
+    return H_sparse, n_qubits
+
+
 def prepare_initial_state(H_sparse, n_qubits, n_electrons=None):
     """Prepare initial state with symmetry-breaking excitations.
 
@@ -399,32 +493,58 @@ def time_evolve(H_sparse, psi_0, times):
     return states
 
 
-def compute_hf_orbital_energies(n_atoms, R, active_orbitals=None):
-    """Compute Hartree-Fock orbital energies for a hydrogen chain.
+def compute_hf_orbital_energies(molecule, R, active_orbitals=None):
+    """Compute Hartree-Fock active-space orbital energies (the orb features ξ).
 
-    Uses PySCF if available (exact RHF orbital energies), otherwise falls
-    back to diagonalizing the one-electron core Hamiltonian from PennyLane
-    (approximate but avoids the PySCF dependency).
-
-    Args:
-        n_atoms: number of hydrogen atoms
-        R: bond length in Angstroms
-        active_orbitals: number of active orbitals (default: n_atoms)
+    `molecule` is an int n_atoms / "hN" (linear H chain, full active space) or a
+    named molecule (e.g. "lih" -> CAS(2,4)). Requires PySCF (RHF); if PySCF is
+    absent it returns zeros and warns, so an R-feature datagen run still
+    completes off-cluster (the orb features are simply not usable in that run).
 
     Returns:
         mo_energies: (n_active,) array of spatial MO energies
     """
-    if active_orbitals is None:
-        active_orbitals = n_atoms
+    kind, payload = _parse_molecule(molecule)
+    if kind == "hchain":
+        n_atoms = payload
+        atom_str = "; ".join(f"H {i * R} 0.0 0.0" for i in range(n_atoms))
+        charge, spin = 0, 0
+        if active_orbitals is None:
+            active_orbitals = n_atoms
+    else:
+        spec = _MOLECULE_SPECS[payload]
+        coords = _molecule_coordinates(spec, R).reshape(-1, 3)
+        atom_str = "; ".join(
+            f"{s} {c[0]} {c[1]} {c[2]}" for s, c in zip(spec["symbols"], coords)
+        )
+        charge = spec["charge"]
+        spin = spec["mult"] - 1
+        if active_orbitals is None:
+            active_orbitals = spec["ao"]
 
-    from pyscf import gto, scf
-    atom_str = "; ".join(f"H {i * R} 0.0 0.0" for i in range(n_atoms))
-    mol = gto.M(atom=atom_str, basis="sto-3g", charge=0, spin=0, verbose=0)
+    try:
+        from pyscf import gto, scf
+    except ModuleNotFoundError:
+        import warnings
+        warnings.warn(
+            f"pyscf unavailable; returning zero HF orbital energies for {molecule!r}. "
+            "Orb features will be invalid for this run — use R-features locally, or "
+            "run datagen where pyscf is installed (Trillium) for the orb recipe."
+        )
+        return np.zeros(active_orbitals, dtype=float)
+
+    mol = gto.M(atom=atom_str, basis="sto-3g", charge=charge, spin=spin, verbose=0)
     mf = scf.RHF(mol)
     mf.kernel()
-    # Active space: select orbitals around Fermi level
-    n_occ = n_atoms // 2
-    start = max(0, n_occ - active_orbitals // 2)
+    if kind == "hchain":
+        # unchanged H-chain convention: orbitals around the Fermi level
+        n_occ = payload // 2
+        start = max(0, n_occ - active_orbitals // 2)
+    else:
+        # mirror molecular_hamiltonian's active space: freeze the lowest
+        # (n_total - n_active)/2 spatial orbitals as core, take the next block
+        n_active_electrons = molecule_n_electrons(molecule)
+        start = max(0, (mol.nelectron - n_active_electrons) // 2)
     end = start + active_orbitals
     return mf.mo_energy[start:end].copy()
 
