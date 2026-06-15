@@ -38,6 +38,9 @@ import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 
+from fermionic_pipeline.eval.nature_style import apply_nature_style
+apply_nature_style()
+
 
 def _safe_savefig(fig, path: Path):
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -85,8 +88,8 @@ def diag_d1(R: np.ndarray, eigvals: np.ndarray, t: np.ndarray, save_dir: Path) -
                     color="tab:red", alpha=0.18, label="aliased region")
     if boundary is not None:
         ax.axvline(boundary, color="tab:red", ls=":", alpha=0.6,
-                   label=fr"aliasing onset $R={boundary:.2f}\,$Å")
-    ax.set_xlabel("R (Å)")
+                   label=fr"aliasing onset $R={boundary:.2f}$\,\AA")
+    ax.set_xlabel(r"$R$ (\AA)")
     ax.set_ylabel(r"$\omega\;(E_h)$")
     ax.set_title(r"D1: Hamiltonian spectral width vs. time-grid Nyquist ceiling")
     ax.legend(loc="upper right")
@@ -95,10 +98,10 @@ def diag_d1(R: np.ndarray, eigvals: np.ndarray, t: np.ndarray, save_dir: Path) -
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.plot(R, ratio, lw=1.6, color="tab:purple")
     ax.axhline(1.0, color="tab:red", ls="--", label="aliasing threshold")
-    ax.axhline(0.5, color="tab:orange", ls=":", label="2× safety factor")
-    ax.set_xlabel("R (Å)")
+    ax.axhline(0.5, color="tab:orange", ls=":", label=r"2$\times$ safety factor")
+    ax.set_xlabel(r"$R$ (\AA)")
     ax.set_ylabel(r"$\omega_{\max}(R)\,/\,\omega_{Ny}$")
-    ax.set_title("D1: Aliasing ratio across the PES (ratio>1 = aliased data)")
+    ax.set_title(r"D1: Aliasing ratio across the PES (ratio\,$>$\,1 = aliased data)")
     ax.legend()
     _safe_savefig(fig, save_dir / "d1_aliasing_ratio.png")
 
@@ -129,7 +132,7 @@ def diag_d2(R: np.ndarray, y: np.ndarray, t: np.ndarray, save_dir: Path) -> dict
     ax.axhline(8.0, color="tab:red", ls="--", label="rule-of-thumb floor (8/period)")
     ax.axhline(2.0, color="tab:purple", ls=":", label="hard Nyquist (2/period)")
     ax.set_yscale("log")
-    ax.set_xlabel("R (Å)")
+    ax.set_xlabel(r"$R$ (\AA)")
     ax.set_ylabel("samples per dominant period")
     ax.set_title(r"D2: training time-grid resolution vs. dominant period $T_{dom}=2\pi/\omega_{op}$")
     ax.legend()
@@ -168,18 +171,18 @@ def diag_d3(R: np.ndarray, y: np.ndarray, t: np.ndarray, save_dir: Path,
     ax.bar(np.arange(K), max_rel_jump, color="tab:blue", alpha=0.75)
     ax.axhline(1.0, color="tab:red", ls="--", label="full signal range / step")
     ax.axhline(0.5, color="tab:orange", ls=":", label="50% range / step")
-    ax.set_xlabel("observable index μ")
+    ax.set_xlabel(r"observable index $\mu$")
     ax.set_ylabel(r"$\max_t\,|\Delta y_\mu|/\mathrm{range}(y_\mu)$")
-    ax.set_title(f"D3: max single-step jump / signal range, R={actual_R:.2f} Å")
+    ax.set_title(rf"D3: max single-step jump / signal range, $R={actual_R:.2f}$\,\AA")
     ax.legend()
 
     ax = axes[1]
     worst = int(np.argmax(max_rel_jump))
     ax.plot(t, y_r[:, worst], lw=1.0, color="tab:blue", label=f"obs {worst}")
     ax.scatter(t, y_r[:, worst], s=4, color="tab:blue", alpha=0.4)
-    ax.set_xlabel("t (a.u.)")
-    ax.set_ylabel("⟨Γ_μ(t)⟩")
-    ax.set_title(f"D3: worst observable trace, R={actual_R:.2f} Å (max-jump = {max_rel_jump[worst]:.2f})")
+    ax.set_xlabel(r"$t$ (a.u.)")
+    ax.set_ylabel(r"$\langle\Gamma_\mu(t)\rangle$")
+    ax.set_title(rf"D3: worst observable trace, $R={actual_R:.2f}$\,\AA (max-jump $=$ {max_rel_jump[worst]:.2f})")
     _safe_savefig(fig, save_dir / "d3_temporal_lipschitz.png")
 
     return {
@@ -218,9 +221,9 @@ def diag_d4(R: np.ndarray, y: np.ndarray, t: np.ndarray, save_dir: Path,
         ax.vlines(t, ymin, ymin + 0.02 * (ymax - ymin),
                   color="black", alpha=0.25, lw=0.5)
         ax.set_xlim(0, t.max())
-        ax.set_xlabel("t (a.u.)")
-        ax.set_ylabel("⟨Γ_μ(t)⟩")
-        ax.set_title(f"D4: R={R[r_idx]:.2f} Å | dt={dt:.3f} | {len(t)} samples in [0, {t[-1]:.0f}]")
+        ax.set_xlabel(r"$t$ (a.u.)")
+        ax.set_ylabel(r"$\langle\Gamma_\mu(t)\rangle$")
+        ax.set_title(rf"D4: $R={R[r_idx]:.2f}$\,\AA $\mid$ dt$={dt:.3f}$ $\mid$ {len(t)} samples in [0, {t[-1]:.0f}]")
         ax.legend(loc="upper right", fontsize=8)
         info.append({"R_target": R_t, "R_actual": float(R[r_idx]), "worst_obs": worst})
     _safe_savefig(fig, save_dir / "d4_signal_with_grid.png")
@@ -241,7 +244,7 @@ def diag_d5(R: np.ndarray, train_idx: list[int], test_idx: list[int],
             label=f"test (n={len(test_R)})", color="tab:red")
     ax.axvline(0.74, color="black", ls=":", alpha=0.6,
                label="aliasing onset (D1: R=0.74)")
-    ax.set_xlabel("R (Å)")
+    ax.set_xlabel(r"$R$ (\AA)")
     ax.set_ylabel("count")
     ax.set_title("D5: train / test R coverage")
     ax.legend()
@@ -303,9 +306,9 @@ def diag_d6(data_path: str, checkpoint: str, save_dir: Path,
             label=r"true $\omega_{\max}(R)$ (data spectrum)")
     ax.axhline(omega_ny, color="tab:red", ls="--",
                label=fr"$\omega_{{Ny}}=\pi/dt={omega_ny:.2f}\,E_h$")
-    ax.set_xlabel("R (Å)")
+    ax.set_xlabel(r"$R$ (\AA)")
     ax.set_ylabel(r"$|\omega|\;(E_h)$")
-    ax.set_title("D6: learned freq_net output ω_k(R) vs. data Nyquist ceiling")
+    ax.set_title(r"D6: learned freq-net output $\omega_k(R)$ vs.\ data Nyquist ceiling")
     ax.legend()
     _safe_savefig(fig, save_dir / "d6_learned_omega_vs_nyquist.png")
 

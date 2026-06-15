@@ -35,6 +35,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
+from fermionic_pipeline.eval.nature_style import apply_nature_style
+apply_nature_style()
+
 from fermionic_pipeline.training.regressor_trainer import load_checkpoint_model
 
 
@@ -122,14 +125,14 @@ def main():
     ax = axes[0, 0]
     ax.plot(R, omega_op, color="tab:purple", lw=1.8, label=r"$\omega_{op}(R)$")
     ax.axhline(args.hi_lo, ls="--", color="gray", alpha=0.7, label=fr"hi-band edge = {args.hi_lo}")
-    ax.set_xlabel("R (Å)"); ax.set_ylabel(r"$\omega$  ($E_h$)")
+    ax.set_xlabel(r"$R$ (\AA)"); ax.set_ylabel(r"$\omega$  ($E_h$)")
     ax.set_title("Operational band per R")
     ax.grid(alpha=0.3); ax.legend(fontsize=9)
 
     ax = axes[0, 1]
     ax.plot(R, m_true_hi, color="tab:red", lw=1.8, label=r"true: hi-band fraction")
     ax.plot(R, m_pred_hi, color="tab:blue", lw=1.8, label=r"pred: hi-band fraction")
-    ax.set_xlabel("R (Å)"); ax.set_ylabel("fraction of in-band energy")
+    ax.set_xlabel(r"$R$ (\AA)"); ax.set_ylabel("fraction of in-band energy")
     ax.set_title(fr"Spectral mass in [{args.hi_lo}, $\omega_{{op}}$]")
     ax.grid(alpha=0.3); ax.legend(fontsize=9)
 
@@ -137,8 +140,8 @@ def main():
     ax.plot(R, ratio, color="black", lw=1.8)
     ax.axhline(1.0, color="gray", ls="--", alpha=0.7)
     ax.axhline(0.2, color="tab:orange", ls=":", alpha=0.7, label="r=0.2 stall threshold")
-    ax.set_xlabel("R (Å)"); ax.set_ylabel(r"$m_{pred}^{hi}/m_{true}^{hi}$")
-    ax.set_title("Stall ratio (r ≪ 1 → stalled; r ≈ 1 → mistargeted-or-fine)")
+    ax.set_xlabel(r"$R$ (\AA)"); ax.set_ylabel(r"$m_{pred}^{hi}/m_{true}^{hi}$")
+    ax.set_title(r"Stall ratio ($r \ll 1 \to$ stalled; $r \approx 1 \to$ mistargeted-or-fine)")
     ax.set_yscale("symlog", linthresh=0.1)
     ax.grid(alpha=0.3); ax.legend(fontsize=9)
 
@@ -146,9 +149,9 @@ def main():
     short = R < args.short_r
     mid = (R >= args.short_r) & (R < args.long_r)
     long_ = R >= args.long_r
-    for mask, label, color in [(short, "short R<1.0", "tab:blue"),
-                               (mid, "mid 1.0–1.75", "tab:green"),
-                               (long_, "long R≥1.75", "tab:orange")]:
+    for mask, label, color in [(short, r"short $R<1.0$", "tab:blue"),
+                               (mid, r"mid $1.0$--$1.75$", "tab:green"),
+                               (long_, r"long $R\ge1.75$", "tab:orange")]:
         if not mask.any():
             continue
         S_t = S_true[mask].mean(axis=0); S_p = S_pred[mask].mean(axis=0)
@@ -156,7 +159,7 @@ def main():
         m = freqs <= 10.0
         ax.plot(freqs[m], S_t[m], color=color, lw=1.6, label=f"{label} true")
         ax.plot(freqs[m], S_p[m], color=color, lw=1.0, ls="--", label=f"{label} pred")
-    ax.set_xlabel(r"$\omega$  ($E_h$)"); ax.set_ylabel("regime-mean |Y|^2 (normalized)")
+    ax.set_xlabel(r"$\omega$  ($E_h$)"); ax.set_ylabel(r"regime-mean $|Y|^2$ (normalized)")
     ax.set_title("Average spectra by regime")
     ax.axvline(args.hi_lo, ls=":", color="gray", alpha=0.5)
     ax.set_yscale("log"); ax.set_ylim(1e-4, 2.0)

@@ -22,6 +22,9 @@ import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+
+from fermionic_pipeline.eval.nature_style import apply_nature_style
+apply_nature_style()
 from scipy.signal import find_peaks
 
 from fermionic_pipeline.training.regressor_trainer import load_checkpoint_model
@@ -113,7 +116,7 @@ def main():
     ax.plot(R, target_speed, color="tab:red", lw=1.6,
             label=fr"$\|\partial \omega_{{peak}}/\partial R\|_2$ (top-{args.n_track} true peaks)")
     ax.set_yscale("log")
-    ax.set_ylabel(r"$\|\partial\omega/\partial R\|_2$  ($E_h/$Å)")
+    ax.set_ylabel(r"$\|\partial\omega/\partial R\|_2$  ($E_h/$\AA)")
     ax.set_title("Model-side vs target-side frequency speed")
     for R_mark in (0.69, 0.71, 0.78):
         ax.axvline(R_mark, ls=":", color="black", alpha=0.4)
@@ -123,7 +126,7 @@ def main():
     ax.plot(R, ratio, color="black", lw=1.6, label="stall ratio (pred/true hi-band)")
     ax.axhline(1.0, ls="--", color="gray", alpha=0.6)
     ax.set_yscale("symlog", linthresh=0.1)
-    ax.set_ylabel("stall ratio"); ax.set_xlabel("R (Å)")
+    ax.set_ylabel("stall ratio"); ax.set_xlabel(r"$R$ (\AA)")
     for R_mark in (0.69, 0.71, 0.78):
         ax.axvline(R_mark, ls=":", color="black", alpha=0.4)
     ax.grid(alpha=0.3); ax.legend(fontsize=10)

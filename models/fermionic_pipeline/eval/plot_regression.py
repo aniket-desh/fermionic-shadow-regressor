@@ -20,8 +20,20 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from fermionic_pipeline.data.regression_dataset import RegressionDatasetHandle
+from fermionic_pipeline.eval.nature_style import (
+    apply_nature_style,
+    grid_figsize,
+    tex_escape,
+    diverging_cmap,
+    quality_cmap,
+    DOUBLE_COL,
+)
 from fermionic_pipeline.inference.spectral_analysis import extract_peaks, spectral_analysis
 from fermionic_pipeline.training.regressor_trainer import load_checkpoint_model
+
+# Render every figure in this module (and the scripts that reuse its plotting
+# helpers) with the Nature-optimised LaTeX style.
+apply_nature_style()
 
 
 def _get_orb_energies(handle, r_idx):
@@ -74,7 +86,8 @@ def plot_spectra(handle, model, test_r_indices, device, save_dir, ljung_box_p=0.
     n_cols = min(4, n_test)
     n_rows = (n_test + n_cols - 1) // n_cols
 
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(5 * n_cols, 4 * n_rows), squeeze=False)
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=grid_figsize(n_cols, n_rows, aspect=0.82),
+                             squeeze=False)
 
     for panel_idx, r_idx in enumerate(test_r_indices):
         row, col = divmod(panel_idx, n_cols)
@@ -91,8 +104,8 @@ def plot_spectra(handle, model, test_r_indices, device, save_dir, ljung_box_p=0.
         spec_e_n = spec_e / max(spec_e.max(), 1e-12)
         spec_m_n = spec_m / max(spec_m.max(), 1e-12)
 
-        ax.plot(omega_e, spec_e_n, "b-", alpha=0.8, label="Exact", linewidth=1)
-        ax.plot(omega_m, spec_m_n, "r-", alpha=0.7, label="Model", linewidth=1)
+        ax.plot(omega_e, spec_e_n, "b-", alpha=0.8, label="Exact", linewidth=0.9)
+        ax.plot(omega_m, spec_m_n, "r-", alpha=0.7, label="Model", linewidth=0.9)
 
         # Exact energy gaps as vertical lines
         eigvals = handle.eigvals[r_idx]
@@ -111,18 +124,17 @@ def plot_spectra(handle, model, test_r_indices, device, save_dir, ljung_box_p=0.
         mean_r = np.nanmean(pearsons) if pearsons else 0.0
         mse = np.mean((D_model - D_exact) ** 2)
 
-        ax.set_title(f"R = {R:.2f} Å   (r = {mean_r:.2f}, MSE = {mse:.1e})", fontsize=9)
-        ax.set_xlabel("ω (Eₕ)", fontsize=8)
-        ax.set_ylabel("I(ω) [normalized]", fontsize=8)
+        ax.set_title(rf"$R = {R:.2f}$\,\AA \quad ($r = {mean_r:.2f}$, MSE\,$=\,${mse:.1e})")
+        ax.set_xlabel(r"$\omega$ ($E_h$)")
+        ax.set_ylabel(r"$I(\omega)$ [normalized]")
         ax.set_xlim(0, omega_max)
-        ax.legend(fontsize=7, loc="upper right")
-        ax.tick_params(labelsize=7)
+        ax.legend(loc="upper right")
 
     for panel_idx in range(n_test, n_rows * n_cols):
         row, col = divmod(panel_idx, n_cols)
         axes[row, col].set_visible(False)
 
-    fig.suptitle("Spectral Comparison: Model (red) vs Exact (blue), gaps (green)", fontsize=11)
+    fig.suptitle("Spectral comparison: Model (red) vs Exact (blue), gaps (green)")
     fig.tight_layout(rect=[0, 0, 1, 0.96])
     path = os.path.join(save_dir, "spectral_comparison.pdf")
     fig.savefig(path)
@@ -150,26 +162,26 @@ def plot_summary(handle, model, test_r_indices, device, save_dir):
         pearsons.append(np.nanmean(ps) if ps else 0.0)
         range_ratios.append(np.nanmean(rrs) if rrs else 0.0)
 
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(14, 4))
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(DOUBLE_COL, DOUBLE_COL / 3.4))
 
-    ax1.plot(Rs, pearsons, "o-", color="tab:blue", markersize=5)
-    ax1.set_xlabel("R (Å)")
-    ax1.set_ylabel("Mean Pearson r")
-    ax1.set_title("Observable Correlation vs R")
+    ax1.plot(Rs, pearsons, "o-", color="tab:blue")
+    ax1.set_xlabel(r"$R$ (\AA)")
+    ax1.set_ylabel(r"Mean Pearson $r$")
+    ax1.set_title(r"Observable correlation vs $R$")
     ax1.set_ylim(-0.2, 1.05)
     ax1.axhline(0, color="gray", linewidth=0.5)
     ax1.grid(True, alpha=0.3)
 
-    ax2.semilogy(Rs, mses, "o-", color="tab:red", markersize=5)
-    ax2.set_xlabel("R (Å)")
+    ax2.semilogy(Rs, mses, "o-", color="tab:red")
+    ax2.set_xlabel(r"$R$ (\AA)")
     ax2.set_ylabel("MSE")
-    ax2.set_title("Prediction Error vs R")
+    ax2.set_title(r"Prediction error vs $R$")
     ax2.grid(True, alpha=0.3)
 
-    ax3.plot(Rs, range_ratios, "o-", color="tab:green", markersize=5)
-    ax3.set_xlabel("R (Å)")
-    ax3.set_ylabel("Range Ratio (model/exact)")
-    ax3.set_title("Amplitude Ratio vs R")
+    ax3.plot(Rs, range_ratios, "o-", color="tab:green")
+    ax3.set_xlabel(r"$R$ (\AA)")
+    ax3.set_ylabel("Range ratio (model/exact)")
+    ax3.set_title(r"Amplitude ratio vs $R$")
     ax3.axhline(1.0, color="gray", linewidth=0.5, linestyle="--")
     ax3.set_ylim(0, 2.0)
     ax3.grid(True, alpha=0.3)
@@ -191,7 +203,9 @@ def plot_time_series(handle, model, test_r_indices, device, save_dir, n_obs=4, n
         step = (n_test - 1) / (n_geom - 1)
         indices = [test_r_indices[int(round(i * step))] for i in range(n_geom)]
 
-    fig, axes = plt.subplots(len(indices), n_obs, figsize=(4 * n_obs, 3 * len(indices)), squeeze=False)
+    fig, axes = plt.subplots(len(indices), n_obs,
+                             figsize=grid_figsize(n_obs, len(indices), aspect=0.72),
+                             squeeze=False)
 
     for row, r_idx in enumerate(indices):
         R = float(handle.R_values[r_idx])
@@ -208,15 +222,14 @@ def plot_time_series(handle, model, test_r_indices, device, save_dir, n_obs=4, n
             ax.plot(t, D_exact[obs_idx], "b-", alpha=0.7, linewidth=0.8, label="Exact")
             ax.plot(t, D_model[obs_idx], "r-", alpha=0.6, linewidth=0.8, label="Model")
             key = handle.observable_keys[obs_idx]
-            ax.set_title(f"R={R:.2f}, obs {key}", fontsize=8)
-            ax.tick_params(labelsize=6)
+            ax.set_title(rf"$R={R:.2f}$, obs {tex_escape(key)}")
             if row == len(indices) - 1:
-                ax.set_xlabel("t (a.u.)", fontsize=7)
+                ax.set_xlabel(r"$t$ (a.u.)")
             if col == 0:
-                ax.set_ylabel("⟨Γ⟩", fontsize=7)
-                ax.legend(fontsize=6)
+                ax.set_ylabel(r"$\langle\Gamma\rangle$")
+                ax.legend()
 
-    fig.suptitle("Observable Time Series: Model (red) vs Exact (blue)", fontsize=10)
+    fig.suptitle("Observable time series: Model (red) vs Exact (blue)")
     fig.tight_layout(rect=[0, 0, 1, 0.96])
     path = os.path.join(save_dir, "time_series.pdf")
     fig.savefig(path)
@@ -232,7 +245,8 @@ def _standardize_rows(D):
     return (D - mu) / sigma
 
 
-def plot_chan_pipeline(handle, model, test_r_indices, device, save_dir, ljung_box_p=0.06):
+def plot_chan_pipeline(handle, model, test_r_indices, device, save_dir, ljung_box_p=0.06,
+                       colorblind=False):
     """Chan et al. Fig 2-style plots: D matrix, covariance C, and spectrum.
 
     For each test geometry, produces a 2×3 figure:
@@ -246,7 +260,7 @@ def plot_chan_pipeline(handle, model, test_r_indices, device, save_dir, ljung_bo
         D_model = predict_signal_matrix(model, R, handle.times, device, orb_energies=_get_orb_energies(handle, r_idx), omega_op=_get_omega_op(handle, r_idx))
         D_exact = handle.expectations[r_idx].T  # (K, N_t)
 
-        fig, axes = plt.subplots(2, 3, figsize=(16, 8))
+        fig, axes = plt.subplots(2, 3, figsize=(DOUBLE_COL, DOUBLE_COL * 0.52))
 
         for row, (D, label) in enumerate([(D_exact, "Exact"), (D_model, "Model")]):
             D_std = _standardize_rows(D)
@@ -261,12 +275,12 @@ def plot_chan_pipeline(handle, model, test_r_indices, device, save_dir, ljung_bo
             ax_d = axes[row, 0]
             vmax = np.percentile(np.abs(D_std), 99)
             im = ax_d.imshow(
-                D_std, aspect="auto", cmap="RdBu_r", vmin=-vmax, vmax=vmax,
+                D_std, aspect="auto", cmap=diverging_cmap(colorblind), vmin=-vmax, vmax=vmax,
                 extent=[0, len(handle.times), D_std.shape[0], 0],
             )
-            ax_d.set_xlabel("time index $n$", fontsize=9)
-            ax_d.set_ylabel("observable index $k$", fontsize=9)
-            ax_d.set_title(f"{label}: data matrix $\\mathbf{{D}}$", fontsize=10)
+            ax_d.set_xlabel(r"time index $n$")
+            ax_d.set_ylabel(r"observable index $k$")
+            ax_d.set_title(rf"{label}: data matrix $\mathbf{{D}}$")
             plt.colorbar(im, ax=ax_d, fraction=0.046, pad=0.04)
 
             # (b) Covariance C = D^T D
@@ -274,16 +288,15 @@ def plot_chan_pipeline(handle, model, test_r_indices, device, save_dir, ljung_bo
             C = D_screened.T @ D_screened
             vmax_c = np.percentile(np.abs(C), 99)
             im_c = ax_c.imshow(
-                C, aspect="auto", cmap="RdBu_r", vmin=-vmax_c, vmax=vmax_c,
+                C, aspect="auto", cmap=diverging_cmap(colorblind), vmin=-vmax_c, vmax=vmax_c,
                 extent=[0, len(handle.times), len(handle.times), 0],
             )
-            ax_c.set_xlabel("time index $n$", fontsize=9)
-            ax_c.set_ylabel("time index $n$", fontsize=9)
+            ax_c.set_xlabel(r"time index $n$")
+            ax_c.set_ylabel(r"time index $n$")
             n_kept = D_screened.shape[0]
             ax_c.set_title(
-                f"{label}: $\\mathbf{{C}} = \\mathbf{{D}}^T\\mathbf{{D}}$ "
-                f"({n_kept}/{D_std.shape[0]} obs)",
-                fontsize=10,
+                rf"{label}: $\mathbf{{C}} = \mathbf{{D}}^T\mathbf{{D}}$ "
+                rf"({n_kept}/{D_std.shape[0]} obs)"
             )
             plt.colorbar(im_c, ax=ax_c, fraction=0.046, pad=0.04)
 
@@ -305,9 +318,9 @@ def plot_chan_pipeline(handle, model, test_r_indices, device, save_dir, ljung_bo
             # Normalize
             spectrum_n = spectrum / max(spectrum.max(), 1e-12)
             ax_s.plot(omega, spectrum_n, color="tab:blue" if row == 0 else "tab:red", linewidth=1.2)
-            ax_s.set_xlabel("$E$ ($E_h$)", fontsize=9)
-            ax_s.set_ylabel("$I(E)$", fontsize=9)
-            ax_s.set_title(f"{label}: shadow spectrum", fontsize=10)
+            ax_s.set_xlabel(r"$E$ ($E_h$)")
+            ax_s.set_ylabel(r"$I(E)$")
+            ax_s.set_title(rf"{label}: shadow spectrum")
 
             # Exact energy gaps as dashed lines
             eigvals = handle.eigvals[r_idx]
@@ -319,8 +332,8 @@ def plot_chan_pipeline(handle, model, test_r_indices, device, save_dir, ljung_bo
             ax_s.set_xlim(0, omega_max)
 
         fig.suptitle(
-            f"Chan et al. pipeline — R = {R:.2f} Å  (H4, 8 qubits)",
-            fontsize=12, fontweight="bold",
+            rf"Chan et al.\ pipeline --- $R = {R:.2f}$\,\AA\ (H4, 8 qubits)",
+            fontweight="bold",
         )
         fig.tight_layout(rect=[0, 0, 1, 0.95])
         path = os.path.join(save_dir, f"chan_pipeline_R{R:.2f}.pdf")
@@ -331,7 +344,7 @@ def plot_chan_pipeline(handle, model, test_r_indices, device, save_dir, ljung_bo
 
 @torch.no_grad()
 def plot_coherence_heatmap(handle, model, test_r_indices, device, save_dir, window=20,
-                           train_R_range=None, train_t_range=None):
+                           train_R_range=None, train_t_range=None, colorblind=False):
     """Heatmap of windowed Pearson r as a function of (R, t).
 
     Shows model coherence time — at large R the model tracks exact
@@ -379,16 +392,16 @@ def plot_coherence_heatmap(handle, model, test_r_indices, device, save_dir, wind
                         ps.append(r)
             corr_map[i, j] = np.mean(ps) if ps else 0.0
 
-    fig, ax = plt.subplots(figsize=(12, 6))
+    fig, ax = plt.subplots(figsize=(DOUBLE_COL, DOUBLE_COL * 0.5))
     im = ax.imshow(
-        corr_map, aspect="auto", cmap="RdYlGn", vmin=-0.2, vmax=1.0,
+        corr_map, aspect="auto", cmap=quality_cmap(colorblind), vmin=-0.2, vmax=1.0,
         extent=[t_centers[0], t_centers[-1], Rs[-1], Rs[0]],
         interpolation="nearest",
     )
-    ax.set_xlabel("t (a.u.)", fontsize=11)
-    ax.set_ylabel("R (Å)", fontsize=11)
-    ax.set_title("Windowed Pearson r(R, t) — model vs exact observables", fontsize=12)
-    plt.colorbar(im, ax=ax, label="Pearson r")
+    ax.set_xlabel(r"$t$ (a.u.)")
+    ax.set_ylabel(r"$R$ (\AA)")
+    ax.set_title(r"Windowed Pearson $r(R, t)$ --- model vs.\ exact observables")
+    plt.colorbar(im, ax=ax, label=r"Pearson $r$")
 
     # Training-data bounding box. Defaults to the full dataset (R, t) extent; the
     # held-out test geometries here all sit inside it, so for the in-box eval the
@@ -420,13 +433,13 @@ def plot_coherence_heatmap(handle, model, test_r_indices, device, save_dir, wind
         ax.text(0.015, 0.03,
                 f"in-box  $\\bar r$={np.nanmean(inbox):.2f}     "
                 f"out-of-box  $\\bar r$={np.nanmean(corr_map[omask]):.2f}",
-                transform=ax.transAxes, fontsize=10, color="#0b3dff",
+                transform=ax.transAxes, color="#0b3dff",
                 bbox=dict(boxstyle="round", fc="white", ec="#0b3dff", alpha=0.85))
     # Expand limits so the box is fully visible even when eval ⊆ training (now)
     # or eval ⊋ training (after the extrapolation runs). y-axis is inverted.
     ax.set_xlim(min(t_centers[0], t_lo), max(t_centers[-1], t_hi))
     ax.set_ylim(max(Rs[-1], R_hi), min(Rs[0], R_lo))
-    ax.legend(loc="upper right", fontsize=9, framealpha=0.9)
+    ax.legend(loc="upper right")
 
     fig.tight_layout()
     path = os.path.join(save_dir, "coherence_heatmap.pdf")
@@ -446,7 +459,14 @@ def main():
                         choices=["dataset", "train-interp"],
                         help="train-interp: non-oracle omega_op interpolated from "
                              "the checkpoint's training geometries only.")
+    parser.add_argument("--colorblind", action="store_true",
+                        help="use colourblind-safe palette + colour maps "
+                             "(Okabe-Ito lines; cividis instead of red-green).")
     args = parser.parse_args()
+
+    # Re-apply the style with the requested colour mode (module import applied
+    # the default); the cmap helpers read this when each figure is drawn.
+    apply_nature_style(colorblind=args.colorblind)
 
     os.makedirs(args.save_dir, exist_ok=True)
     device = torch.device(args.device or ("cuda" if torch.cuda.is_available() else "cpu"))
@@ -465,8 +485,10 @@ def main():
     plot_spectra(handle, model, test_r_indices, device, args.save_dir, args.ljung_box_p)
     plot_summary(handle, model, test_r_indices, device, args.save_dir)
     plot_time_series(handle, model, test_r_indices, device, args.save_dir)
-    plot_chan_pipeline(handle, model, test_r_indices, device, args.save_dir, args.ljung_box_p)
-    plot_coherence_heatmap(handle, model, test_r_indices, device, args.save_dir)
+    plot_chan_pipeline(handle, model, test_r_indices, device, args.save_dir, args.ljung_box_p,
+                       colorblind=args.colorblind)
+    plot_coherence_heatmap(handle, model, test_r_indices, device, args.save_dir,
+                           colorblind=args.colorblind)
 
 
 if __name__ == "__main__":

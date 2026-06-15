@@ -19,6 +19,9 @@ import os
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
+
+from fermionic_pipeline.eval.nature_style import apply_nature_style
+apply_nature_style()
 import torch
 
 from fermionic_pipeline.training.regressor_trainer import load_checkpoint_model
@@ -90,7 +93,7 @@ def main():
 
     for R_mark in (args.short_r, args.long_r):
         ax.axvline(R_mark, ls=":", color="gray", alpha=0.6)
-    ax.set_xlabel("R (Å)")
+    ax.set_xlabel(r"$R$ (\AA)")
     ax.set_ylabel(r"$|\omega|$  ($E_h$)")
     ax.set_title(r"Learned $\omega_k(R)$ vs. true eigenvalue gaps")
     ax.legend(loc="upper right", fontsize=9)
@@ -104,14 +107,14 @@ def main():
     bins = np.linspace(0.0, max(abs_omega.max(), abs_gaps.max()) * 1.02, 60)
 
     for mask, label, color in [
-        (short_mask, f"R < {args.short_r}", "tab:blue"),
-        (mid_mask, f"{args.short_r} ≤ R < {args.long_r}", "tab:green"),
-        (long_mask, f"R ≥ {args.long_r}", "tab:orange"),
+        (short_mask, rf"$R < {args.short_r}$", "tab:blue"),
+        (mid_mask, rf"${args.short_r} \le R < {args.long_r}$", "tab:green"),
+        (long_mask, rf"$R \ge {args.long_r}$", "tab:orange"),
     ]:
         if not mask.any():
             continue
         ax.hist(abs_omega[mask].ravel(), bins=bins, density=True, histtype="step",
-                lw=2.0, color=color, label=f"learned ω, {label}")
+                lw=2.0, color=color, label=rf"learned $\omega$, {label}")
         ax.hist(abs_gaps[mask].ravel(), bins=bins, density=True, histtype="step",
                 lw=1.2, ls="--", color=color, alpha=0.8,
                 label=f"true gaps, {label}")
@@ -131,7 +134,7 @@ def main():
     ax.axhline(1.0, color="gray", alpha=0.5, lw=0.8)
     for R_mark in (args.short_r, args.long_r):
         ax.axvline(R_mark, ls=":", color="gray", alpha=0.6)
-    ax.set_xlabel("R (Å)")
+    ax.set_xlabel(r"$R$ (\AA)")
     ax.set_ylabel(r"$|\omega|$ / ratio")
     ax.set_title("Ceiling comparison")
     ax.legend(loc="upper right", fontsize=9)

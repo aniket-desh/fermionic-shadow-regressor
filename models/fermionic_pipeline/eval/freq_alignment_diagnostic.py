@@ -30,6 +30,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
+from fermionic_pipeline.eval.nature_style import apply_nature_style
+apply_nature_style()
+
 from fermionic_pipeline.training.regressor_trainer import load_checkpoint_model
 
 
@@ -139,24 +142,24 @@ def main():
     fig, axes = plt.subplots(1, 3, figsize=(18, 5.0))
 
     ax = axes[0]
-    ax.plot(R, omega_op, color="tab:purple", lw=1.8, label=fr"$\omega_{{op}}(R)$ ({int(args.frac*100)}% energy)")
+    ax.plot(R, omega_op, color="tab:purple", lw=1.8, label=fr"$\omega_{{op}}(R)$ ({int(args.frac*100)}\% energy)")
     ax.plot(R, omega.max(axis=1), color="tab:blue", lw=1.5, alpha=0.7,
             label=r"max$_k\,|\omega_k(R)|$ (learned)")
-    ax.set_xlabel("R (Å)"); ax.set_ylabel(r"$\omega$  ($E_h$)")
+    ax.set_xlabel(r"$R$ (\AA)"); ax.set_ylabel(r"$\omega$  ($E_h$)")
     ax.set_title("Operational ceiling vs learned range")
     ax.axvline(args.short_r, ls=":", color="gray"); ax.axvline(args.long_r, ls=":", color="gray")
     ax.grid(alpha=0.3); ax.legend(fontsize=9)
 
     ax = axes[1]
     ax.plot(R, D, color="tab:red", lw=1.8)
-    ax.set_xlabel("R (Å)"); ax.set_ylabel(r"$D(R)$ ($E_h^2$)")
+    ax.set_xlabel(r"$R$ (\AA)"); ax.set_ylabel(r"$D(R)$ ($E_h^2$)")
     ax.set_title(r"Amplitude-weighted miss: $\int |Y|^2 \min_k |\omega-\omega_k|^2\,d\omega / \int|Y|^2\,d\omega$")
     ax.axvline(args.short_r, ls=":", color="gray"); ax.axvline(args.long_r, ls=":", color="gray")
     ax.grid(alpha=0.3)
 
     ax = axes[2]
     ax.plot(R, W1, color="tab:green", lw=1.8)
-    ax.set_xlabel("R (Å)"); ax.set_ylabel(r"$W_1$  ($E_h$)")
+    ax.set_xlabel(r"$R$ (\AA)"); ax.set_ylabel(r"$W_1$  ($E_h$)")
     ax.set_title(r"$W_1$: learned $|\omega_k|$ vs $|Y|^2$ distribution")
     ax.axvline(args.short_r, ls=":", color="gray"); ax.axvline(args.long_r, ls=":", color="gray")
     ax.grid(alpha=0.3)
@@ -181,7 +184,7 @@ def main():
                 ax.axvline(w, ls="-", color="tab:blue", alpha=0.4, lw=0.8)
         ax.axvline(np.nan, ls="-", color="tab:blue", alpha=0.4, lw=0.8, label=r"learned $|\omega_k|$")
         ax.set_xlabel(r"$\omega$  ($E_h$)")
-        ax.set_title(fr"R = {R[i]:.2f} Å,  D={D[i]:.3f},  $W_1$={W1[i]:.3f}")
+        ax.set_title(fr"$R = {R[i]:.2f}$\,\AA,  $D={D[i]:.3f}$,  $W_1$={W1[i]:.3f}")
         ax.set_xlim(0, f_max); ax.legend(fontsize=8, loc="upper right"); ax.grid(alpha=0.3)
     axes[0].set_ylabel("normalized amplitude")
     fig.tight_layout()

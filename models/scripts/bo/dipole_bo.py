@@ -32,7 +32,10 @@ from fermionic_pipeline.training.regressor_trainer import load_checkpoint_model
 from fermionic_pipeline.eval.plot_regression import (
     predict_signal_matrix, _get_orb_energies, _get_omega_op,
 )
+from fermionic_pipeline.eval.nature_style import apply_nature_style, tex_escape, DOUBLE_COL
 from fermionic_pipeline.bo import FunctionPriorGP
+
+apply_nature_style()
 
 
 def _interp_fn(t_grid, vals):
@@ -220,7 +223,7 @@ def main():
     mol, fit_tmax, max_samples = P["molecule"], P["fit_tmax"], P["max_samples"]
 
     nEx = len(examples)
-    fig = plt.figure(figsize=(4.8 * nEx, 9.9))
+    fig = plt.figure(figsize=(DOUBLE_COL, DOUBLE_COL * 9.9 / (4.8 * nEx)))
     gs = fig.add_gridspec(3, nEx, height_ratios=[1.15, 1.2, 1.2], hspace=0.46, wspace=0.26)
     # row 0: fit examples (zoom to fit_tmax). The legend is hoisted to a single
     # figure legend at the top so it never overlaps the (dense) traces.
@@ -234,13 +237,13 @@ def main():
         ax.scatter(c["sampled"], c["sampled_y"], s=14, facecolor="white", edgecolor="#16a34a",
                    linewidth=0.8, zorder=4, label="sampled times")
         ax.set_xlim(0, fit_tmax)
-        ax.set_title(f"{mol},  $R$ = {ex['R']:.2f} Å   "
-                     f"(FSR {ex['fsr_mean']:.0f} vs flat {ex['flat_mean']:.0f} samples)", fontsize=9)
-        ax.set_xlabel("time  $t$  (a.u.)", fontsize=9)
+        ax.set_title(rf"{tex_escape(mol)},  $R = {ex['R']:.2f}$\,\AA \quad "
+                     rf"(FSR {ex['fsr_mean']:.0f} vs flat {ex['flat_mean']:.0f} samples)")
+        ax.set_xlabel(r"time  $t$  (a.u.)")
         if k == 0:
-            ax.set_ylabel(r"dipole  $\langle\mu_x(t)\rangle$  (a.u.)", fontsize=10)
+            ax.set_ylabel(r"dipole  $\langle\mu_x(t)\rangle$  (a.u.)")
             fit_handles = ax.get_legend_handles_labels()
-    fig.legend(*fit_handles, loc="upper center", ncol=5, fontsize=8, frameon=True,
+    fig.legend(*fit_handles, loc="upper center", ncol=5, frameon=True,
                bbox_to_anchor=(0.5, 1.005))
     # row 1: samples-vs-R
     axs = fig.add_subplot(gs[1, :])
@@ -248,19 +251,19 @@ def main():
     axs.plot(Rs, flat_m, "-o", color="#6b7280", ms=4, label="flat prior")
     axs.fill_between(Rs, fsr_m - fsr_e, fsr_m + fsr_e, color="#16a34a", alpha=0.2)
     axs.plot(Rs, fsr_m, "-o", color="#16a34a", ms=4, label="FSR prior (v18-orb)")
-    axs.set_ylabel("quantum samples needed\n(to DFT-level accuracy)", fontsize=10)
-    axs.set_title(f"Quantum measurements to reconstruct the dipole vs bond length ({mol})", fontsize=10)
-    axs.set_ylim(-1, max_samples + 3); axs.legend(fontsize=9, loc="center right", framealpha=0.9)
+    axs.set_ylabel("quantum samples needed\n(to DFT-level accuracy)")
+    axs.set_title(rf"Quantum measurements to reconstruct the dipole vs bond length ({tex_escape(mol)})")
+    axs.set_ylim(-1, max_samples + 3); axs.legend(loc="center right")
     # row 2: physically-grounded panel — FSR dipole relative error vs the DFT bar
     axe = fig.add_subplot(gs[2, :], sharex=axs)
     axe.plot(Rs, 100 * rel_err, "-o", color="#16a34a", ms=4, label="FSR prior error (0 samples)")
-    axe.axhline(100 * rel_tol, color="#b91c1c", ls="--", lw=1.4, label=f"DFT-level (~{100 * rel_tol:.0f}%)")
+    axe.axhline(100 * rel_tol, color="#b91c1c", ls="--", lw=1.4, label=rf"DFT-level ($\sim${100 * rel_tol:.0f}\%)")
     axe.fill_between(Rs, 0, 100 * rel_tol, color="#16a34a", alpha=0.08)
-    axe.axhline(1.0, color="#6b7280", ls=":", lw=1.0, alpha=0.8, label="1% (stricter)")
-    axe.set_xlabel("bond length  $R$  (Å)", fontsize=11)
-    axe.set_ylabel("dipole relative\nRMS error (%)", fontsize=10)
-    axe.set_title("FSR dipole accuracy vs bond length  (DFT-level bar: Hait & Head-Gordon 2018)", fontsize=10)
-    axe.legend(fontsize=8, loc="upper left", framealpha=0.9)
+    axe.axhline(1.0, color="#6b7280", ls=":", lw=1.0, alpha=0.8, label=r"1\% (stricter)")
+    axe.set_xlabel(r"bond length  $R$  (\AA)")
+    axe.set_ylabel("dipole relative\n" + r"RMS error (\%)")
+    axe.set_title(r"FSR dipole accuracy vs bond length  (DFT-level bar: Hait \& Head-Gordon 2018)")
+    axe.legend(loc="upper left")
     axe.set_ylim(0, min(14.0, 100 * float(np.nanmax(rel_err)) * 1.05))
     for ax in (axs, axe):
         for ex in examples:
