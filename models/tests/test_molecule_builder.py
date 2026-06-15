@@ -86,6 +86,20 @@ def test_polyatomic_geometry():
     assert np.isclose(np.linalg.norm(h2o[1]), 0.96) and np.isclose(np.linalg.norm(h2o[2]), 0.96)
 
 
+def test_orb_feature_guard_rejects_fake_runs():
+    """--use_orb_features must fail fast on the all-zero PySCF fallback or on
+    orb energies with no geometry variation (ChatGPT review guardrail)."""
+    from fermionic_pipeline.training.regressor_trainer import validate_orb_features
+    with pytest.raises(ValueError):
+        validate_orb_features(None)
+    with pytest.raises(ValueError):                       # all-zero (PySCF fallback)
+        validate_orb_features(np.zeros((5, 4)))
+    with pytest.raises(ValueError):                       # constant across geometries
+        validate_orb_features(np.tile(np.arange(4.0), (5, 1)))
+    ok = validate_orb_features(np.random.RandomState(0).randn(5, 4))  # varies across R
+    assert ok.shape == (5, 4)
+
+
 def test_return_pennylane_shapes():
     out = build_molecule_hamiltonian("lih", 1.5, return_pennylane=True)
     assert len(out) == 3

@@ -392,16 +392,18 @@ def build_molecule_hamiltonian(molecule, R, return_pennylane=False):
 
 
 def prepare_initial_state(H_sparse, n_qubits, n_electrons=None):
-    """Prepare initial state with symmetry-breaking excitations.
+    """Prepare an initial state with broadened spectral support.
 
-    Creates a superposition of the Hartree-Fock state with single
-    excitations that break particle-number and spin symmetry, giving
-    nonzero overlap with eigenstates in multiple symmetry sectors.
+    Adds a small superposition of single excitations to the Hartree-Fock
+    determinant to broaden spectral support beyond |HF>, while PRESERVING
+    particle number: each single excitation moves one electron occupied->virtual,
+    so the electron count is unchanged (the whole state stays in the N-electron
+    sector).
 
-    Without excitations, |HF> = |1...10...0> conserves particle number
-    and S_z, restricting spectral content to a single symmetry sector.
-    Adding HOMO->LUMO and cross-spin excitations accesses many more
-    eigenstates, producing rich multi-frequency dynamics.
+    |HF> = |1...10...0> alone has spectral content concentrated in one symmetry
+    sector. The added singles give nonzero overlap with more eigenstates (and can
+    reach other S_z sectors when the excitation pairs opposite-spin orbitals),
+    producing the multi-frequency dynamics the regressor learns.
 
     Args:
         H_sparse: sparse Hamiltonian matrix

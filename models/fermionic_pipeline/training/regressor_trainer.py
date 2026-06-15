@@ -64,6 +64,31 @@ class RegressorTrainConfig:
     # throttled by the residual trunk's large gradients (the v16 5/27 borderline-regression cause).
 
 
+def validate_orb_features(hf_orbital_energies):
+    """Fail fast on a fake orb-feature run before any training happens.
+
+    Two silent-failure modes are refused: (1) the datagen PySCF fallback stores
+    ALL-ZERO orbital energies when PySCF is missing (off-cluster), and
+    (2) orbital energies that do not vary across geometry carry no conditioning
+    signal. Either would train a degenerate orb model that looks fine on the
+    saturated cross-observable proxy. Returns the validated (n_R, n_orb) array.
+    """
+    if hf_orbital_energies is None:
+        raise ValueError("--use_orb_features requires a dataset with hf_orbital_energies")
+    orb = np.asarray(hf_orbital_energies)
+    if not np.any(orb):
+        raise ValueError(
+            "--use_orb_features but hf_orbital_energies are all zero: datagen ran without "
+            "PySCF (zero-fallback). Regenerate where PySCF is installed, or train on R input."
+        )
+    if float(orb.std(axis=0).max()) < 1e-8:
+        raise ValueError(
+            "--use_orb_features but hf_orbital_energies do not vary across geometries "
+            "(zero variance): they carry no conditioning signal. Check the datagen HF path."
+        )
+    return orb
+
+
 def _pearson_corr(pred, target, eps=1e-8):
     """Cross-observable Pearson at fixed (R, t).
 
@@ -491,9 +516,8 @@ def main():
 
     n_orb = 0
     if args.use_orb_features:
-        if handle.hf_orbital_energies is None:
-            raise ValueError("--use_orb_features requires dataset with hf_orbital_energies")
-        n_orb = handle.hf_orbital_energies.shape[1]
+        orb = validate_orb_features(handle.hf_orbital_energies)
+        n_orb = orb.shape[1]
         print(f"[info] using HF orbital energies as freq_net input ({n_orb} features)")
 
     if args.adaptive_bandwidth:
