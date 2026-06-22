@@ -128,3 +128,7 @@
 [geom 25/29] R=1.800 | time=910.5s
 [geom 24/29] R=1.750 | time=912.9s
 [geom 28/29] R=1.950 | time=915.7s
+[geom 29/29] R=2.000 | time=761.0s
+[done] regression dataset -> results/fermionic_pipeline/regression/h2o_regress_v1_extrap/regression_targets.h5
+[saved] omega_op(29) -> results/fermionic_pipeline/regression/h2o_regress_v1_extrap/regression_targets.h5
+  min=0.609  max=2.285  mean=1.222  E_h

@@ -1,0 +1,178 @@
+{
+  "checkpoint": "results/fermionic_pipeline/regression/h2o_regress_v1_orb_s42_model/regressor.pt",
+  "data_path": "results/fermionic_pipeline/regression/h2o_regress_v1/regression_targets.h5",
+  "results": [
+    {
+      "envelope_pearson": 0.5469809054080924,
+      "phase_err_mean": 0.6590730628953908,
+      "amp_ratio_std": 0.4414513408995184,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 0.75
+    },
+    {
+      "envelope_pearson": 0.3178697460668131,
+      "phase_err_mean": 0.30474295790189737,
+      "amp_ratio_std": 0.4578082103942209,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 0.76
+    },
+    {
+      "envelope_pearson": 0.29536901410807687,
+      "phase_err_mean": 0.9233700173791063,
+      "amp_ratio_std": 0.4634145856424642,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 0.77
+    },
+    {
+      "envelope_pearson": 0.6158446856892212,
+      "phase_err_mean": 1.8342462388539778,
+      "amp_ratio_std": 0.4862225180369954,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 0.84
+    },
+    {
+      "envelope_pearson": 0.5797692318461466,
+      "phase_err_mean": 0.8445233433816494,
+      "amp_ratio_std": 0.4152688106709694,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.0
+    },
+    {
+      "envelope_pearson": 0.44898797153631864,
+      "phase_err_mean": 0.8152897046836923,
+      "amp_ratio_std": 0.4179720848938257,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.1
+    },
+    {
+      "envelope_pearson": 0.5577523628845399,
+      "phase_err_mean": 0.6595365300770891,
+      "amp_ratio_std": 0.3129556806911476,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.14
+    },
+    {
+      "envelope_pearson": 0.05370153678277166,
+      "phase_err_mean": 0.43085092754242765,
+      "amp_ratio_std": 0.3953413258852706,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.2
+    },
+    {
+      "envelope_pearson": 0.23971914558158175,
+      "phase_err_mean": 0.9830144998727312,
+      "amp_ratio_std": 0.33907832597384663,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.21
+    },
+    {
+      "envelope_pearson": 0.5825441195889541,
+      "phase_err_mean": 1.9576440773345785,
+      "amp_ratio_std": 0.365911191867607,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.27
+    },
+    {
+      "envelope_pearson": 0.5296181640095279,
+      "phase_err_mean": 1.200619502010979,
+      "amp_ratio_std": 0.43289731861941405,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.3
+    },
+    {
+      "envelope_pearson": 0.4556218492626396,
+      "phase_err_mean": 1.3462463136517917,
+      "amp_ratio_std": 0.32680313124704347,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.33
+    },
+    {
+      "envelope_pearson": 0.5269832890456477,
+      "phase_err_mean": 0.2697313810864184,
+      "amp_ratio_std": 0.40564377999961876,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.39
+    },
+    {
+      "envelope_pearson": 0.6292324053135634,
+      "phase_err_mean": 1.3054942832034602,
+      "amp_ratio_std": 0.2213672254483073,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.45
+    },
+    {
+      "envelope_pearson": 0.6855933929291407,
+      "phase_err_mean": 1.4619590229931565,
+      "amp_ratio_std": 0.3916456756814563,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.48
+    },
+    {
+      "envelope_pearson": 0.7672525826790401,
+      "phase_err_mean": 1.7920578961205271,
+      "amp_ratio_std": 0.28767427646396304,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.49
+    }
+  ],
+  "stratified": {
+    "envelope_pearson": [
+      {
+        "zone": "borderline [0.74, 1.0)",
+        "n": 4,
+        "mean": 0.4440160878180509,
+        "median": 0.43242532573745274
+      },
+      {
+        "zone": "[1.0, 1.5)",
+        "n": 12,
+        "mean": 0.504731337621656,
+        "median": 0.5436852634470339
+      }
+    ],
+    "phase_err_mean": [
+      {
+        "zone": "borderline [0.74, 1.0)",
+        "n": 4,
+        "mean": 0.930358069257593,
+        "median": 0.7912215401372485
+      },
+      {
+        "zone": "[1.0, 1.5)",
+        "n": 12,
+        "mean": 1.088913956829875,
+        "median": 1.091817000941855
+      }
+    ],
+    "amp_ratio_std": [
+      {
+        "zone": "borderline [0.74, 1.0)",
+        "n": 4,
+        "mean": 0.4622241637432997,
+        "median": 0.46061139801834255
+      },
+      {
+        "zone": "[1.0, 1.5)",
+        "n": 12,
+        "mean": 0.35937990228687244,
+        "median": 0.3787784337745317
+      }
+    ]
+  }
+}
