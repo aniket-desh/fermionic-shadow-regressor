@@ -1,0 +1,130 @@
+[h2o datagen] train R[0.7,1.5] t_max=800 n_times=2001 (14 workers)
+/home/aniket/.local/lib/python3.11/site-packages/pennylane/__init__.py:212: PennyLaneDeprecationWarning: PennyLane v0.44 has dropped maintainence support for NumPy < 2.0.0. You have version 1.26.4 installed. Future versions of PennyLane will not work with NumPy<2.0. Please consider upgrading NumPy using `python -m pip install numpy --upgrade`. 
+  warnings.warn(
+[info] sampled fresh Q library (N_Q=500)
+[info] 81 geometries | 2001 times | 500 Q's | K=120 observables
+[info] precomputing 500 matchgate decompositions... done (1.6s)
+[info] precomputing estimator metadata... done (0.0s)
+[info] computing HF orbital energies... done (4.9s, 4 orbitals per geometry)
+[info] parallel mode: 14 workers across 81 geometries
+[geom 11/81] R=0.800 | time=376.4s
+[geom 10/81] R=0.790 | time=382.2s
+[geom 01/81] R=0.700 | time=477.8s
+[geom 05/81] R=0.740 | time=476.7s
+[geom 06/81] R=0.750 | time=476.7s
+[geom 07/81] R=0.760 | time=477.1s
+[geom 04/81] R=0.730 | time=478.5s
+[geom 09/81] R=0.780 | time=477.5s
+[geom 12/81] R=0.810 | time=477.2s
+[geom 13/81] R=0.820 | time=477.4s
+[geom 14/81] R=0.830 | time=477.6s
+[geom 03/81] R=0.720 | time=481.9s
+[geom 02/81] R=0.710 | time=483.1s
+[geom 08/81] R=0.770 | time=481.7s
+[geom 15/81] R=0.840 | time=390.9s
+[geom 16/81] R=0.850 | time=387.8s
+[geom 24/81] R=0.930 | time=397.0s
+[geom 20/81] R=0.890 | time=453.2s
+[geom 17/81] R=0.860 | time=457.0s
+[geom 21/81] R=0.900 | time=455.6s
+[geom 19/81] R=0.880 | time=456.7s
+[geom 22/81] R=0.910 | time=456.0s
+[geom 23/81] R=0.920 | time=455.7s
+[geom 18/81] R=0.870 | time=458.6s
+[geom 25/81] R=0.940 | time=458.1s
+[geom 26/81] R=0.950 | time=457.4s
+[geom 28/81] R=0.970 | time=456.5s
+[geom 27/81] R=0.960 | time=465.0s
+[geom 29/81] R=0.980 | time=409.8s
+[geom 30/81] R=0.990 | time=408.0s
+[geom 31/81] R=1.000 | time=416.2s
+[geom 35/81] R=1.040 | time=428.2s
+[geom 42/81] R=1.110 | time=423.9s
+[geom 33/81] R=1.020 | time=466.1s
+[geom 32/81] R=1.010 | time=471.8s
+[geom 36/81] R=1.050 | time=470.9s
+[geom 38/81] R=1.070 | time=470.2s
+[geom 39/81] R=1.080 | time=467.8s
+[geom 34/81] R=1.030 | time=472.2s
+[geom 41/81] R=1.100 | time=467.4s
+[geom 37/81] R=1.060 | time=473.9s
+[geom 40/81] R=1.090 | time=471.8s
+[geom 43/81] R=1.120 | time=413.9s
+[geom 44/81] R=1.130 | time=416.1s
+[geom 45/81] R=1.140 | time=418.9s
+[geom 46/81] R=1.150 | time=426.6s
+[geom 47/81] R=1.160 | time=426.1s
+[geom 48/81] R=1.170 | time=466.1s
+[geom 53/81] R=1.220 | time=464.6s
+[geom 51/81] R=1.200 | time=465.8s
+[geom 49/81] R=1.180 | time=469.7s
+[geom 50/81] R=1.190 | time=466.9s
+[geom 56/81] R=1.250 | time=463.7s
+[geom 52/81] R=1.210 | time=468.0s
+[geom 54/81] R=1.230 | time=467.6s
+[geom 55/81] R=1.240 | time=467.2s
+[geom 57/81] R=1.260 | time=434.0s
+[geom 58/81] R=1.270 | time=438.9s
+[geom 59/81] R=1.280 | time=441.6s
+[geom 60/81] R=1.290 | time=428.1s
+[geom 61/81] R=1.300 | time=427.8s
+[geom 65/81] R=1.340 | time=431.7s
+[geom 62/81] R=1.310 | time=462.8s
+[geom 66/81] R=1.350 | time=455.9s
+[geom 67/81] R=1.360 | time=455.3s
+[geom 63/81] R=1.320 | time=459.2s
+[geom 68/81] R=1.370 | time=457.8s
+[geom 64/81] R=1.330 | time=460.9s
+[geom 69/81] R=1.380 | time=458.1s
+[geom 70/81] R=1.390 | time=456.6s
+[geom 71/81] R=1.400 | time=417.1s
+[geom 72/81] R=1.410 | time=414.4s
+[geom 73/81] R=1.420 | time=436.8s
+[geom 74/81] R=1.430 | time=394.7s
+[geom 75/81] R=1.440 | time=390.9s
+[geom 76/81] R=1.450 | time=389.2s
+[geom 79/81] R=1.480 | time=434.6s
+[geom 78/81] R=1.470 | time=435.0s
+[geom 80/81] R=1.490 | time=433.7s
+[geom 77/81] R=1.460 | time=436.9s
+[geom 81/81] R=1.500 | time=434.4s
+[done] regression dataset -> results/fermionic_pipeline/regression/h2o_regress_v1/regression_targets.h5
+[saved] omega_op(81) -> results/fermionic_pipeline/regression/h2o_regress_v1/regression_targets.h5
+  min=0.926  max=2.033  mean=1.387  E_h
+[h2o datagen] extended R[0.6,2.0] t_max=1600 n_times=4001
+/home/aniket/.local/lib/python3.11/site-packages/pennylane/__init__.py:212: PennyLaneDeprecationWarning: PennyLane v0.44 has dropped maintainence support for NumPy < 2.0.0. You have version 1.26.4 installed. Future versions of PennyLane will not work with NumPy<2.0. Please consider upgrading NumPy using `python -m pip install numpy --upgrade`. 
+  warnings.warn(
+[info] sampled fresh Q library (N_Q=500)
+[info] 29 geometries | 4001 times | 500 Q's | K=120 observables
+[info] precomputing 500 matchgate decompositions... done (1.6s)
+[info] precomputing estimator metadata... done (0.0s)
+[info] computing HF orbital energies... done (1.6s, 4 orbitals per geometry)
+[info] parallel mode: 14 workers across 29 geometries
+[geom 02/29] R=0.650 | time=886.6s
+[geom 14/29] R=1.250 | time=990.8s
+[geom 07/29] R=0.900 | time=1009.8s
+[geom 08/29] R=0.950 | time=1019.5s
+[geom 03/29] R=0.700 | time=1044.3s
+[geom 01/29] R=0.600 | time=1045.0s
+[geom 04/29] R=0.750 | time=1045.6s
+[geom 13/29] R=1.200 | time=1044.7s
+[geom 09/29] R=1.000 | time=1046.3s
+[geom 05/29] R=0.800 | time=1047.7s
+[geom 12/29] R=1.150 | time=1047.2s
+[geom 10/29] R=1.050 | time=1048.3s
+[geom 11/29] R=1.100 | time=1049.3s
+[geom 06/29] R=0.850 | time=1055.2s
+[geom 15/29] R=1.300 | time=915.0s
+[geom 16/29] R=1.350 | time=909.4s
+[geom 17/29] R=1.400 | time=910.3s
+[geom 18/29] R=1.450 | time=909.2s
+[geom 23/29] R=1.700 | time=897.2s
+[geom 19/29] R=1.500 | time=903.5s
+[geom 21/29] R=1.600 | time=902.0s
+[geom 27/29] R=1.900 | time=897.3s
+[geom 26/29] R=1.850 | time=900.4s
+[geom 22/29] R=1.650 | time=910.7s
+[geom 20/29] R=1.550 | time=913.8s
+[geom 25/29] R=1.800 | time=910.5s
+[geom 24/29] R=1.750 | time=912.9s
+[geom 28/29] R=1.950 | time=915.7s

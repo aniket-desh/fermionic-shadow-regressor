@@ -1,0 +1,292 @@
+{
+  "checkpoint": "results/fermionic_pipeline/regression/n2_regress_v1_orb_s42_model/regressor.pt",
+  "data_path": "results/fermionic_pipeline/regression/n2_regress_v1/regression_targets.h5",
+  "results": [
+    {
+      "envelope_pearson": 0.999999643802356,
+      "phase_err_mean": 0.001172196158627251,
+      "amp_ratio_std": 0.001537075494881762,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.0
+    },
+    {
+      "envelope_pearson": 0.9999996600054833,
+      "phase_err_mean": 0.001582927716833649,
+      "amp_ratio_std": 0.0016663229557455572,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.01
+    },
+    {
+      "envelope_pearson": 0.9999993574288137,
+      "phase_err_mean": 0.002476975036366957,
+      "amp_ratio_std": 0.0010953976066789732,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.06
+    },
+    {
+      "envelope_pearson": 0.9999994574224244,
+      "phase_err_mean": 0.0017513394469900485,
+      "amp_ratio_std": 0.002981257475993746,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.14
+    },
+    {
+      "envelope_pearson": 0.9999991898302065,
+      "phase_err_mean": 0.0023938832740555346,
+      "amp_ratio_std": 0.003979705393037378,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.4
+    },
+    {
+      "envelope_pearson": 0.9999991903500232,
+      "phase_err_mean": 0.0027385878355849595,
+      "amp_ratio_std": 0.004644643061583825,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.41
+    },
+    {
+      "envelope_pearson": 0.9999991011067134,
+      "phase_err_mean": 0.004622799390936241,
+      "amp_ratio_std": 0.009166153630958455,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.46
+    },
+    {
+      "envelope_pearson": 0.999999022048255,
+      "phase_err_mean": 0.004923904132639368,
+      "amp_ratio_std": 0.008606607380035356,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.49
+    },
+    {
+      "envelope_pearson": 0.9999987419251181,
+      "phase_err_mean": 0.004166785383931147,
+      "amp_ratio_std": 0.0076492234813279915,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.55
+    },
+    {
+      "envelope_pearson": 0.999998744756983,
+      "phase_err_mean": 0.0038224559229318037,
+      "amp_ratio_std": 0.006925904831721559,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.56
+    },
+    {
+      "envelope_pearson": 0.9999990262821449,
+      "phase_err_mean": 0.003289957213313909,
+      "amp_ratio_std": 0.006015936910295906,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.57
+    },
+    {
+      "envelope_pearson": 0.9999985069243217,
+      "phase_err_mean": 0.004216443542161001,
+      "amp_ratio_std": 0.0070785589550111305,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.65
+    },
+    {
+      "envelope_pearson": 0.9999870611364151,
+      "phase_err_mean": 0.01297202079102119,
+      "amp_ratio_std": 0.0208138062726247,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.74
+    },
+    {
+      "envelope_pearson": 0.9685144042572499,
+      "phase_err_mean": 0.04374288603151206,
+      "amp_ratio_std": 0.0759654039493661,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.79
+    },
+    {
+      "envelope_pearson": 0.9845769284091456,
+      "phase_err_mean": 0.07386216097358292,
+      "amp_ratio_std": 0.05607176413693701,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.81
+    },
+    {
+      "envelope_pearson": 0.9700146919737873,
+      "phase_err_mean": 0.4260100211001836,
+      "amp_ratio_std": 0.12555823217026787,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.82
+    },
+    {
+      "envelope_pearson": 0.9974716064533308,
+      "phase_err_mean": 0.047068433859560964,
+      "amp_ratio_std": 0.03588308423700022,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.86
+    },
+    {
+      "envelope_pearson": 0.9629670941441558,
+      "phase_err_mean": 0.036415801047561924,
+      "amp_ratio_std": 0.05691820996050186,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.91
+    },
+    {
+      "envelope_pearson": 0.998517180885684,
+      "phase_err_mean": 0.029815321573406137,
+      "amp_ratio_std": 0.10524730527850813,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.92
+    },
+    {
+      "envelope_pearson": 0.9962309176710992,
+      "phase_err_mean": 0.03437479878582469,
+      "amp_ratio_std": 0.063646507566147,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 1.97
+    },
+    {
+      "envelope_pearson": 0.9993977804275739,
+      "phase_err_mean": 0.03429357030328804,
+      "amp_ratio_std": 0.05504632235635748,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 2.0
+    },
+    {
+      "envelope_pearson": 0.9993508362076011,
+      "phase_err_mean": 0.021448035984836963,
+      "amp_ratio_std": 0.04340497325650272,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 2.06
+    },
+    {
+      "envelope_pearson": 0.9970850833658641,
+      "phase_err_mean": 0.026999135052065665,
+      "amp_ratio_std": 0.06667428007256537,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 2.07
+    },
+    {
+      "envelope_pearson": 0.9965998704576954,
+      "phase_err_mean": 0.02977674111244024,
+      "amp_ratio_std": 0.07581554603734403,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 2.09
+    },
+    {
+      "envelope_pearson": 0.9926681975583316,
+      "phase_err_mean": 1.2909123582051172,
+      "amp_ratio_std": 0.25166799197994294,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 2.11
+    },
+    {
+      "envelope_pearson": 0.9964072078617465,
+      "phase_err_mean": 0.01797981379128021,
+      "amp_ratio_std": 0.056646012487706655,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 2.16
+    },
+    {
+      "envelope_pearson": 0.45897771664798,
+      "phase_err_mean": 1.2663341653001068,
+      "amp_ratio_std": 0.24498355425461507,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 2.25
+    },
+    {
+      "envelope_pearson": 0.559607954489551,
+      "phase_err_mean": 0.21974739666516854,
+      "amp_ratio_std": 0.217496223695604,
+      "n_observables_kept": 120,
+      "n_observables_total": 120,
+      "R": 2.28
+    }
+  ],
+  "stratified": {
+    "envelope_pearson": [
+      {
+        "zone": "[1.0, 1.5)",
+        "n": 8,
+        "mean": 0.9999993277492845,
+        "median": 0.9999992738894184
+      },
+      {
+        "zone": "[1.5, 2.0)",
+        "n": 12,
+        "mean": 0.9898562420682864,
+        "median": 0.9979943936695074
+      },
+      {
+        "zone": "[2.0, 3.0]",
+        "n": 8,
+        "mean": 0.8750118308770429,
+        "median": 0.996503539159721
+      }
+    ],
+    "phase_err_mean": [
+      {
+        "zone": "[1.0, 1.5)",
+        "n": 8,
+        "mean": 0.002707826624004251,
+        "median": 0.002435429155211246
+      },
+      {
+        "zone": "[1.5, 2.0)",
+        "n": 12,
+        "mean": 0.05997975718541595,
+        "median": 0.032095060179615414
+      },
+      {
+        "zone": "[2.0, 3.0]",
+        "n": 8,
+        "mean": 0.3634364020517879,
+        "median": 0.03203515570786414
+      }
+    ],
+    "amp_ratio_std": [
+      {
+        "zone": "[1.0, 1.5)",
+        "n": 8,
+        "mean": 0.004209645374864381,
+        "median": 0.003480481434515562
+      },
+      {
+        "zone": "[1.5, 2.0)",
+        "n": 12,
+        "mean": 0.047314494812475794,
+        "median": 0.04597742418696862
+      },
+      {
+        "zone": "[2.0, 3.0]",
+        "n": 8,
+        "mean": 0.1264668630175798,
+        "median": 0.0712449130549547
+      }
+    ]
+  }
+}

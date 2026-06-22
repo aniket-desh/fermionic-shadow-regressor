@@ -1,0 +1,337 @@
+### HF upload (private dataset repo aniketdesh/molecular-shadows-datasets) ###
+  [up] results/fermionic_pipeline/regression/n2_regress_v1/regression_targets.h5 (136 MB) -> aniketdesh/molecular-shadows-datasets:n2/regression_targets.h5
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+  ..._v1/regression_targets.h5:   0%|          |  524kB /  136MB            [A[A
+
+  ..._v1/regression_targets.h5:   0%|          |  524kB /  136MB            [A[AProcessing Files (0 / 1)      :   0%|          |  524kB /  136MB, 51.7kB/s  
+New Data Upload               :   1%|          |  524kB / 67.1MB, 51.7kB/s  [A
+
+  ..._v1/regression_targets.h5:   6%|▌         | 8.39MB /  136MB            [A[AProcessing Files (0 / 1)      :   6%|▌         | 8.39MB /  136MB,  824kB/s  
+New Data Upload               :  13%|█▎        | 8.39MB / 67.1MB,  824kB/s  [A
+
+  ..._v1/regression_targets.h5:  49%|████▉     | 66.6MB /  136MB            [A[AProcessing Files (0 / 1)      :  49%|████▉     | 66.6MB /  136MB, 6.51MB/s  
+New Data Upload               :  50%|████▉     | 66.6MB /  134MB, 6.51MB/s  [A
+
+  ..._v1/regression_targets.h5:  49%|████▉     | 66.6MB /  136MB            [A[A
+
+  ..._v1/regression_targets.h5:  50%|████▉     | 67.6MB /  136MB            [A[AProcessing Files (0 / 1)      :  50%|████▉     | 67.6MB /  136MB, 6.49MB/s  
+New Data Upload               :  50%|████▉     | 67.6MB /  136MB, 6.49MB/s  [A
+
+  ..._v1/regression_targets.h5:  98%|█████████▊|  133MB /  136MB            [A[AProcessing Files (0 / 1)      :  98%|█████████▊|  133MB /  136MB, 12.8MB/s  
+New Data Upload               :  98%|█████████▊|  133MB /  136MB, 12.8MB/s  [A
+
+  ..._v1/regression_targets.h5:  98%|█████████▊|  133MB /  136MB            [A[A
+
+  ..._v1/regression_targets.h5:  98%|█████████▊|  133MB /  136MB            [A[A
+
+  ..._v1/regression_targets.h5:  98%|█████████▊|  133MB /  136MB            [A[A
+
+  ..._v1/regression_targets.h5:  98%|█████████▊|  133MB /  136MB            [A[A
+
+  ..._v1/regression_targets.h5:  98%|█████████▊|  133MB /  136MB            [A[A
+
+  ..._v1/regression_targets.h5:  98%|█████████▊|  133MB /  136MB            [A[A
+
+  ..._v1/regression_targets.h5:  98%|█████████▊|  133MB /  136MB            [A[A
+
+  ..._v1/regression_targets.h5:  98%|█████████▊|  133MB /  136MB            [A[A
+
+  ..._v1/regression_targets.h5: 100%|█████████▉|  135MB /  136MB            [A[AProcessing Files (0 / 1)      : 100%|█████████▉|  135MB /  136MB, 11.9MB/s  
+New Data Upload               : 100%|█████████▉|  135MB /  136MB, 11.9MB/s  [A
+
+  ..._v1/regression_targets.h5: 100%|█████████▉|  135MB /  136MB            [A[AProcessing Files (0 / 1)      : 100%|█████████▉|  135MB /  136MB, 11.8MB/s  
+New Data Upload               : 100%|█████████▉|  135MB /  136MB, 11.8MB/s  [A
+
+  ..._v1/regression_targets.h5: 100%|█████████▉|  135MB /  136MB            [A[A
+
+  ..._v1/regression_targets.h5: 100%|█████████▉|  135MB /  136MB            [A[A
+
+  ..._v1/regression_targets.h5: 100%|█████████▉|  135MB /  136MB            [A[A
+
+  ..._v1/regression_targets.h5: 100%|█████████▉|  135MB /  136MB            [A[A
+
+  ..._v1/regression_targets.h5: 100%|██████████|  136MB /  136MB            [A[AProcessing Files (1 / 1)      : 100%|██████████|  136MB /  136MB, 11.3MB/s  
+New Data Upload               : 100%|██████████|  136MB /  136MB, 11.3MB/s  [A
+
+  ..._v1/regression_targets.h5: 100%|██████████|  136MB /  136MB            [A[A
+
+  ..._v1/regression_targets.h5: 100%|██████████|  136MB /  136MB            [A[A
+
+  ..._v1/regression_targets.h5: 100%|██████████|  136MB /  136MB            [A[A
+
+  ..._v1/regression_targets.h5: 100%|██████████|  136MB /  136MB            [A[A
+
+  ..._v1/regression_targets.h5: 100%|██████████|  136MB /  136MB            [A[A
+
+  ..._v1/regression_targets.h5: 100%|██████████|  136MB /  136MB            [A[A
+
+  ..._v1/regression_targets.h5: 100%|██████████|  136MB /  136MB            [A[AProcessing Files (1 / 1)      : 100%|██████████|  136MB /  136MB, 10.6MB/s  
+New Data Upload               : 100%|██████████|  136MB /  136MB, 10.6MB/s  
+  ..._v1/regression_targets.h5: 100%|██████████|  136MB /  136MB            
+  [up] results/fermionic_pipeline/regression/n2_regress_v1_extrap/regression_targets.h5 (75 MB) -> aniketdesh/molecular-shadows-datasets:n2/extrap_regression_targets.h5
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+  ...rap/regression_targets.h5:   0%|          |  274kB / 75.0MB            [A[A
+
+  ...rap/regression_targets.h5:   0%|          |  274kB / 75.0MB            [A[AProcessing Files (0 / 1)      :   0%|          |  274kB / 75.0MB,   ???B/s  
+
+  ...rap/regression_targets.h5:  11%|█         | 7.94MB / 75.0MB            [A[AProcessing Files (0 / 1)      :  11%|█         | 7.94MB / 75.0MB,  786kB/s  
+
+  ...rap/regression_targets.h5:  20%|██        | 15.1MB / 75.0MB            [A[AProcessing Files (0 / 1)      :  20%|██        | 15.1MB / 75.0MB, 1.48MB/s  
+
+  ...rap/regression_targets.h5:  33%|███▎      | 24.9MB / 75.0MB            [A[AProcessing Files (0 / 1)      :  33%|███▎      | 24.9MB / 75.0MB, 2.44MB/s  
+
+  ...rap/regression_targets.h5:  33%|███▎      | 24.9MB / 75.0MB            [A[A
+
+  ...rap/regression_targets.h5:  39%|███▉      | 29.6MB / 75.0MB            [A[AProcessing Files (0 / 1)      :  39%|███▉      | 29.6MB / 75.0MB, 2.85MB/s  
+New Data Upload               :   9%|▉         | 4.72MB / 50.1MB,  462kB/s  [A
+
+  ...rap/regression_targets.h5: 100%|█████████▉| 74.7MB / 75.0MB            [A[AProcessing Files (0 / 1)      : 100%|█████████▉| 74.7MB / 75.0MB, 7.23MB/s  
+New Data Upload               :  99%|█████████▉| 49.8MB / 50.1MB, 4.86MB/s  [A
+
+  ...rap/regression_targets.h5: 100%|█████████▉| 74.7MB / 75.0MB            [A[A
+
+  ...rap/regression_targets.h5: 100%|█████████▉| 74.7MB / 75.0MB            [A[A
+
+  ...rap/regression_targets.h5: 100%|█████████▉| 74.7MB / 75.0MB            [A[A
+
+  ...rap/regression_targets.h5: 100%|█████████▉| 74.7MB / 75.0MB            [A[A
+
+  ...rap/regression_targets.h5: 100%|█████████▉| 74.7MB / 75.0MB            [A[A
+
+  ...rap/regression_targets.h5: 100%|█████████▉| 74.7MB / 75.0MB            [A[A
+
+  ...rap/regression_targets.h5: 100%|██████████| 75.0MB / 75.0MB            [A[AProcessing Files (1 / 1)      : 100%|██████████| 75.0MB / 75.0MB, 6.78MB/s  
+New Data Upload               : 100%|██████████| 50.1MB / 50.1MB, 4.57MB/s  [A
+
+  ...rap/regression_targets.h5: 100%|██████████| 75.0MB / 75.0MB            [A[A
+
+  ...rap/regression_targets.h5: 100%|██████████| 75.0MB / 75.0MB            [A[A
+
+  ...rap/regression_targets.h5: 100%|██████████| 75.0MB / 75.0MB            [A[A
+
+  ...rap/regression_targets.h5: 100%|██████████| 75.0MB / 75.0MB            [A[A
+
+  ...rap/regression_targets.h5: 100%|██████████| 75.0MB / 75.0MB            [A[A
+
+  ...rap/regression_targets.h5: 100%|██████████| 75.0MB / 75.0MB            [A[AProcessing Files (1 / 1)      : 100%|██████████| 75.0MB / 75.0MB, 6.41MB/s  
+New Data Upload               : 100%|██████████| 50.1MB / 50.1MB, 4.32MB/s  
+  ...rap/regression_targets.h5: 100%|██████████| 75.0MB / 75.0MB            
+  [up] results/fermionic_pipeline/regression/n2_regress_v1_orb_s42_model/regressor.pt (49 MB) -> aniketdesh/molecular-shadows-datasets:n2/regressor.pt
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+  ...rb_s42_model/regressor.pt:   7%|▋         | 3.34MB / 49.1MB            [A[A
+
+  ...rb_s42_model/regressor.pt:   7%|▋         | 3.34MB / 49.1MB            [A[AProcessing Files (0 / 1)      :   7%|▋         | 3.34MB / 49.1MB,  329kB/s  
+New Data Upload               :   7%|▋         | 3.34MB / 49.1MB,  329kB/s  [A
+
+  ...rb_s42_model/regressor.pt: 100%|█████████▉| 48.9MB / 49.1MB            [A[AProcessing Files (0 / 1)      : 100%|█████████▉| 48.9MB / 49.1MB, 4.80MB/s  
+New Data Upload               : 100%|█████████▉| 48.9MB / 49.1MB, 4.80MB/s  [A
+
+  ...rb_s42_model/regressor.pt: 100%|█████████▉| 48.9MB / 49.1MB            [A[A
+
+  ...rb_s42_model/regressor.pt: 100%|█████████▉| 48.9MB / 49.1MB            [A[A
+
+  ...rb_s42_model/regressor.pt: 100%|█████████▉| 48.9MB / 49.1MB            [A[A
+
+  ...rb_s42_model/regressor.pt: 100%|█████████▉| 48.9MB / 49.1MB            [A[A
+
+  ...rb_s42_model/regressor.pt: 100%|█████████▉| 48.9MB / 49.1MB            [A[A
+
+  ...rb_s42_model/regressor.pt: 100%|█████████▉| 48.9MB / 49.1MB            [A[A
+
+  ...rb_s42_model/regressor.pt: 100%|█████████▉| 48.9MB / 49.1MB            [A[A
+
+  ...rb_s42_model/regressor.pt: 100%|██████████| 49.1MB / 49.1MB            [A[AProcessing Files (1 / 1)      : 100%|██████████| 49.1MB / 49.1MB, 4.46MB/s  
+New Data Upload               : 100%|██████████| 49.1MB / 49.1MB, 4.46MB/s  [A
+
+  ...rb_s42_model/regressor.pt: 100%|██████████| 49.1MB / 49.1MB            [A[A
+
+  ...rb_s42_model/regressor.pt: 100%|██████████| 49.1MB / 49.1MB            [A[A
+
+  ...rb_s42_model/regressor.pt: 100%|██████████| 49.1MB / 49.1MB            [A[AProcessing Files (1 / 1)      : 100%|██████████| 49.1MB / 49.1MB, 4.36MB/s  
+New Data Upload               : 100%|██████████| 49.1MB / 49.1MB, 4.36MB/s  
+  ...rb_s42_model/regressor.pt: 100%|██████████| 49.1MB / 49.1MB            
+  [up] results/fermionic_pipeline/regression/n2_regress_v1_orb_s42_model/eval/regressor_eval.json (0 MB) -> aniketdesh/molecular-shadows-datasets:n2/regressor_eval.json
+  [done] n2
+  [up] results/fermionic_pipeline/regression/beh2_regress_v1/regression_targets.h5 (193 MB) -> aniketdesh/molecular-shadows-datasets:beh2/regression_targets.h5
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+  ..._v1/regression_targets.h5:   0%|          |  524kB /  193MB            [A[A
+
+  ..._v1/regression_targets.h5:   0%|          |  524kB /  193MB            [A[AProcessing Files (0 / 1)      :   0%|          |  524kB /  193MB, 51.7kB/s  
+New Data Upload               :   1%|          |  524kB / 67.1MB, 51.7kB/s  [A
+
+  ..._v1/regression_targets.h5:   5%|▌         | 9.96MB /  193MB            [A[AProcessing Files (0 / 1)      :   5%|▌         | 9.96MB /  193MB,  978kB/s  
+New Data Upload               :  15%|█▍        | 9.96MB / 67.1MB,  978kB/s  [A
+
+  ..._v1/regression_targets.h5:  34%|███▍      | 66.6MB /  193MB            [A[AProcessing Files (0 / 1)      :  34%|███▍      | 66.6MB /  193MB, 6.51MB/s  
+New Data Upload               :  99%|█████████▉| 66.6MB / 67.1MB, 6.51MB/s  [A
+
+  ..._v1/regression_targets.h5:  34%|███▍      | 66.6MB /  193MB            [A[A
+
+  ..._v1/regression_targets.h5:  34%|███▍      | 66.6MB /  193MB            [A[A
+
+  ..._v1/regression_targets.h5:  37%|███▋      | 71.3MB /  193MB            [A[AProcessing Files (0 / 1)      :  37%|███▋      | 71.3MB /  193MB, 6.78MB/s  
+New Data Upload               :  37%|███▋      | 71.3MB /  193MB, 6.78MB/s  [A
+
+  ..._v1/regression_targets.h5:  69%|██████▉   |  134MB /  193MB            [A[AProcessing Files (0 / 1)      :  69%|██████▉   |  134MB /  193MB, 12.8MB/s  
+New Data Upload               :  69%|██████▉   |  134MB /  193MB, 12.8MB/s  [A
+
+  ..._v1/regression_targets.h5:  69%|██████▉   |  134MB /  193MB            [A[A
+
+  ..._v1/regression_targets.h5:  69%|██████▉   |  134MB /  193MB            [A[A
+
+  ..._v1/regression_targets.h5:  69%|██████▉   |  134MB /  193MB            [A[A
+
+  ..._v1/regression_targets.h5:  69%|██████▉   |  134MB /  193MB            [A[A
+
+  ..._v1/regression_targets.h5:  69%|██████▉   |  134MB /  193MB            [A[A
+
+  ..._v1/regression_targets.h5:  69%|██████▉   |  134MB /  193MB            [A[AProcessing Files (0 / 1)      :  69%|██████▉   |  134MB /  193MB, 12.1MB/s  
+New Data Upload               :  69%|██████▉   |  134MB /  193MB, 12.1MB/s  [A
+
+  ..._v1/regression_targets.h5: 100%|█████████▉|  193MB /  193MB            [A[AProcessing Files (0 / 1)      : 100%|█████████▉|  193MB /  193MB, 17.6MB/s  
+New Data Upload               : 100%|█████████▉|  193MB /  193MB, 17.6MB/s  [A
+
+  ..._v1/regression_targets.h5: 100%|█████████▉|  193MB /  193MB            [A[A
+
+  ..._v1/regression_targets.h5: 100%|█████████▉|  193MB /  193MB            [A[A
+
+  ..._v1/regression_targets.h5: 100%|█████████▉|  193MB /  193MB            [A[A
+
+  ..._v1/regression_targets.h5: 100%|█████████▉|  193MB /  193MB            [A[AProcessing Files (0 / 1)      : 100%|█████████▉|  193MB /  193MB, 16.9MB/s  
+New Data Upload               : 100%|█████████▉|  193MB /  193MB, 16.9MB/s  [A
+
+  ..._v1/regression_targets.h5: 100%|█████████▉|  193MB /  193MB            [A[A
+
+  ..._v1/regression_targets.h5: 100%|█████████▉|  193MB /  193MB            [A[A
+
+  ..._v1/regression_targets.h5: 100%|█████████▉|  193MB /  193MB            [A[A
+
+  ..._v1/regression_targets.h5: 100%|█████████▉|  193MB /  193MB            [A[A
+
+  ..._v1/regression_targets.h5: 100%|█████████▉|  193MB /  193MB            [A[A
+
+  ..._v1/regression_targets.h5: 100%|██████████|  193MB /  193MB            [A[AProcessing Files (1 / 1)      : 100%|██████████|  193MB /  193MB, 16.0MB/s  
+New Data Upload               : 100%|██████████|  193MB /  193MB, 16.0MB/s  [A
+
+  ..._v1/regression_targets.h5: 100%|██████████|  193MB /  193MB            [A[A
+
+  ..._v1/regression_targets.h5: 100%|██████████|  193MB /  193MB            [A[A
+
+  ..._v1/regression_targets.h5: 100%|██████████|  193MB /  193MB            [A[A
+
+  ..._v1/regression_targets.h5: 100%|██████████|  193MB /  193MB            [A[A
+
+  ..._v1/regression_targets.h5: 100%|██████████|  193MB /  193MB            [A[AProcessing Files (1 / 1)      : 100%|██████████|  193MB /  193MB, 15.4MB/s  
+New Data Upload               : 100%|██████████|  193MB /  193MB, 15.4MB/s  
+  ..._v1/regression_targets.h5: 100%|██████████|  193MB /  193MB            
+  [up] results/fermionic_pipeline/regression/beh2_regress_v1_extrap/regression_targets.h5 (102 MB) -> aniketdesh/molecular-shadows-datasets:beh2/extrap_regression_targets.h5
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+  ...rap/regression_targets.h5:   4%|▍         | 3.87MB /  102MB            [A[A
+
+  ...rap/regression_targets.h5:   4%|▍         | 3.87MB /  102MB            [A[AProcessing Files (0 / 1)      :   4%|▍         | 3.87MB /  102MB,   ???B/s  
+
+  ...rap/regression_targets.h5:  11%|█         | 11.1MB /  102MB            [A[AProcessing Files (0 / 1)      :  11%|█         | 11.1MB /  102MB, 1.10MB/s  
+
+  ...rap/regression_targets.h5:  24%|██▍       | 24.6MB /  102MB            [A[AProcessing Files (0 / 1)      :  24%|██▍       | 24.6MB /  102MB, 2.42MB/s  
+
+  ...rap/regression_targets.h5:  31%|███▏      | 31.9MB /  102MB            [A[AProcessing Files (0 / 1)      :  31%|███▏      | 31.9MB /  102MB, 3.11MB/s  
+
+  ...rap/regression_targets.h5:  33%|███▎      | 34.1MB /  102MB            [A[AProcessing Files (0 / 1)      :  33%|███▎      | 34.1MB /  102MB, 3.29MB/s  
+
+  ...rap/regression_targets.h5:  34%|███▍      | 34.6MB /  102MB            [A[AProcessing Files (0 / 1)      :  34%|███▍      | 34.6MB /  102MB, 3.31MB/s  
+New Data Upload               :   1%|          |  531kB / 67.9MB, 52.0kB/s  [A
+
+  ...rap/regression_targets.h5:  58%|█████▊    | 58.9MB /  102MB            [A[AProcessing Files (0 / 1)      :  58%|█████▊    | 58.9MB /  102MB, 5.66MB/s  
+New Data Upload               :  37%|███▋      | 24.9MB / 67.9MB, 2.43MB/s  [A
+
+  ...rap/regression_targets.h5: 100%|█████████▉|  101MB /  102MB            [A[AProcessing Files (0 / 1)      : 100%|█████████▉|  101MB /  102MB, 9.74MB/s  
+New Data Upload               :  99%|█████████▉| 67.4MB / 67.9MB, 6.54MB/s  [A
+
+  ...rap/regression_targets.h5: 100%|█████████▉|  101MB /  102MB            [A[A
+
+  ...rap/regression_targets.h5: 100%|█████████▉|  101MB /  102MB            [A[A
+
+  ...rap/regression_targets.h5: 100%|█████████▉|  101MB /  102MB            [A[A
+
+  ...rap/regression_targets.h5: 100%|█████████▉|  101MB /  102MB            [A[A
+
+  ...rap/regression_targets.h5: 100%|█████████▉|  101MB /  102MB            [A[A
+
+  ...rap/regression_targets.h5: 100%|█████████▉|  101MB /  102MB            [A[A
+
+  ...rap/regression_targets.h5: 100%|█████████▉|  101MB /  102MB            [A[A
+
+  ...rap/regression_targets.h5: 100%|█████████▉|  101MB /  102MB            [A[A
+
+  ...rap/regression_targets.h5: 100%|█████████▉|  101MB /  102MB            [A[A
+
+  ...rap/regression_targets.h5: 100%|█████████▉|  101MB /  102MB            [A[A
+
+  ...rap/regression_targets.h5: 100%|██████████|  102MB /  102MB            [A[AProcessing Files (1 / 1)      : 100%|██████████|  102MB /  102MB, 8.80MB/s  
+New Data Upload               : 100%|██████████| 67.9MB / 67.9MB, 5.93MB/s  [A
+
+  ...rap/regression_targets.h5: 100%|██████████|  102MB /  102MB            [A[A
+
+  ...rap/regression_targets.h5: 100%|██████████|  102MB /  102MB            [A[A
+
+  ...rap/regression_targets.h5: 100%|██████████|  102MB /  102MB            [A[A
+
+  ...rap/regression_targets.h5: 100%|██████████|  102MB /  102MB            [A[A
+
+  ...rap/regression_targets.h5: 100%|██████████|  102MB /  102MB            [A[AProcessing Files (1 / 1)      : 100%|██████████|  102MB /  102MB, 8.42MB/s  
+New Data Upload               : 100%|██████████| 67.9MB / 67.9MB, 5.67MB/s  
+  ...rap/regression_targets.h5: 100%|██████████|  102MB /  102MB            
+  [up] results/fermionic_pipeline/regression/beh2_regress_v1_orb_s42_model/regressor.pt (49 MB) -> aniketdesh/molecular-shadows-datasets:beh2/regressor.pt
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+  ...rb_s42_model/regressor.pt:   1%|          |  555kB / 49.1MB            [A[A
+
+  ...rb_s42_model/regressor.pt:   1%|          |  555kB / 49.1MB            [A[AProcessing Files (0 / 1)      :   1%|          |  555kB / 49.1MB, 54.9kB/s  
+New Data Upload               :   1%|          |  555kB / 49.1MB, 54.9kB/s  [A
+
+  ...rb_s42_model/regressor.pt:  37%|███▋      | 18.3MB / 49.1MB            [A[AProcessing Files (0 / 1)      :  37%|███▋      | 18.3MB / 49.1MB, 1.80MB/s  
+New Data Upload               :  37%|███▋      | 18.3MB / 49.1MB, 1.80MB/s  [A
+
+  ...rb_s42_model/regressor.pt:  99%|█████████▉| 48.9MB / 49.1MB            [A[AProcessing Files (0 / 1)      :  99%|█████████▉| 48.9MB / 49.1MB, 4.79MB/s  
+New Data Upload               :  99%|█████████▉| 48.9MB / 49.1MB, 4.79MB/s  [A
+
+  ...rb_s42_model/regressor.pt:  99%|█████████▉| 48.9MB / 49.1MB            [A[A
+
+  ...rb_s42_model/regressor.pt:  99%|█████████▉| 48.9MB / 49.1MB            [A[A
+
+  ...rb_s42_model/regressor.pt:  99%|█████████▉| 48.9MB / 49.1MB            [A[A
+
+  ...rb_s42_model/regressor.pt:  99%|█████████▉| 48.9MB / 49.1MB            [A[A
+
+  ...rb_s42_model/regressor.pt:  99%|█████████▉| 48.9MB / 49.1MB            [A[A
+
+  ...rb_s42_model/regressor.pt:  99%|█████████▉| 48.9MB / 49.1MB            [A[A
+
+  ...rb_s42_model/regressor.pt:  99%|█████████▉| 48.9MB / 49.1MB            [A[A
+
+  ...rb_s42_model/regressor.pt: 100%|██████████| 49.1MB / 49.1MB            [A[AProcessing Files (1 / 1)      : 100%|██████████| 49.1MB / 49.1MB, 4.45MB/s  
+New Data Upload               : 100%|██████████| 49.1MB / 49.1MB, 4.45MB/s  [A
+
+  ...rb_s42_model/regressor.pt: 100%|██████████| 49.1MB / 49.1MB            [A[A
+
+  ...rb_s42_model/regressor.pt: 100%|██████████| 49.1MB / 49.1MB            [A[A
+
+  ...rb_s42_model/regressor.pt: 100%|██████████| 49.1MB / 49.1MB            [A[AProcessing Files (1 / 1)      : 100%|██████████| 49.1MB / 49.1MB, 4.35MB/s  
+New Data Upload               : 100%|██████████| 49.1MB / 49.1MB, 4.35MB/s  
+  ...rb_s42_model/regressor.pt: 100%|██████████| 49.1MB / 49.1MB            
+  [up] results/fermionic_pipeline/regression/beh2_regress_v1_orb_s42_model/eval/regressor_eval.json (1 MB) -> aniketdesh/molecular-shadows-datasets:beh2/regressor_eval.json
+  [done] beh2
+### GitHub push (branch runpod-results) ###
+Switched to branch 'runpod-results'
+M	models/fermionic_pipeline/eval/nature_style.py
