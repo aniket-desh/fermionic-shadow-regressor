@@ -7,6 +7,12 @@ all_data.npy
 research-logs/
 tmp/
 
+# Secrets / API tokens — NEVER commit (public repo)
+hf.txt
+*.token
+*token*.txt
+.env
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
