@@ -9,6 +9,10 @@ matplotlib>=3.7
 
 # Molecular Hamiltonians (data generation)
 pennylane>=0.35
+# Required for HF orbital-energy features (the orb recipe). Without pyscf,
+# compute_hf_orbital_energies falls back to zeros and validate_orb_features()
+# aborts training. Mandatory wherever datagen runs (cluster or RunPod).
+pyscf>=2.3
 
 # Tests
 pytest>=7.0
