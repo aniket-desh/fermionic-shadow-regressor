@@ -6,6 +6,11 @@ stuck behind low-priority 24h jobs) on the Trillium cluster, here on the persona
 instead. A second Claude instance ("Local Claude") wrote this briefing and is handling
 the manuscript; you produce the experimental results.
 
+> **Note:** this public repo intentionally omits the internal research logs
+> (`research-logs/`) and the manuscript. Don't go looking for them — this
+> briefing is self-contained and has everything you need (grids, recipe, flags,
+> scoring, pitfalls). If something seems missing, ask Aniket rather than assume.
+
 ## What this project is
 
 The fermionic shadow regressor (FSR) amortizes quantum-generated matchgate-shadow data
