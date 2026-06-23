@@ -1,0 +1,28 @@
+  warnings.warn(
+[h2o] n_qubits=8  n_modes=16  channels=120
+candidate grid: t_max=800.0 (resolution 2pi/t_max=0.0079)  dt=0.4 (Nyquist pi/dt=7.854)
+
+     R     bw99   dw_str n_str   t_need  dt_safe  verdict
+  0.70   2.0256   0.0232     8    270.8    0.620  PASS
+  0.75   1.9140   0.0241     7    260.7    0.657  PASS
+  0.80   1.8114   0.0253     7    248.3    0.694  PASS
+  0.85   1.7168   0.0270     8    232.7    0.732  PASS
+  0.90   1.6294   0.0289     8    217.4    0.771  PASS
+  0.95   1.5482   0.0313     7    200.7    0.812  PASS
+  1.00   1.4725   0.0338     7    185.9    0.853  PASS
+  1.05   1.4017   0.0366     8    171.7    0.897  PASS
+  1.10   1.3352   0.0396     8    158.7    0.941  PASS
+  1.15   1.2727   0.0429     8    146.5    0.987  PASS
+  1.20   1.2138   0.0377     7    166.7    1.035  PASS
+  1.25   1.1583   0.0192     8    327.2    1.085  PASS
+  1.30   1.1059   0.0044     8   1428.0    1.136  FAIL
+  1.35   1.0564   0.0073     8    860.7    1.190  FAIL
+  1.40   1.0097   0.0165     8    380.8    1.245  PASS
+  1.45   0.9655   0.0235     8    267.4    1.302  PASS
+  1.50   0.9236   0.0167     8    376.2    1.361  PASS
+
+=== box summary ===
+  max bw99 over box    = 2.0256  -> need dt <= pi/bw99 = 1.551
+  min dw_strong (codom)= 0.0044  -> need t_max >= 2pi/dw = 1428.0
+  2/17 FAIL: 2 unresolved co-dominant (dw<res), 0 aliased (bw99>Nyquist)
+  failing R: [1.3, 1.35]
