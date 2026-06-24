@@ -1,0 +1,8 @@
+/home/aniket/.local/lib/python3.11/site-packages/pennylane/__init__.py:212: PennyLaneDeprecationWarning: PennyLane v0.44 has dropped maintainence support for NumPy < 2.0.0. You have version 1.26.4 installed. Future versions of PennyLane will not work with NumPy<2.0. Please consider upgrading NumPy using `python -m pip install numpy --upgrade`. 
+  warnings.warn(
+h4    R_eq = 1.68 Ang  E0=-2.180505  scan[0.6,3.0]  interior-min OK
+lih   R_eq = 2.86 Ang  E0=-7.865222  scan[1.2,3.6]  interior-min OK
+beh2  R_eq = 2.44 Ang  E0=-15.567328  scan[1.0,3.4]  interior-min OK
+n2    R_eq = 2.24 Ang  E0=-107.616462  scan[0.9,2.8]  interior-min OK
+
+R_EQ = {'h4': 1.68, 'lih': 2.86, 'beh2': 2.44, 'n2': 2.24}

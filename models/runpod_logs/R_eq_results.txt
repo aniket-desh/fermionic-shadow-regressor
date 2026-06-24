@@ -1,0 +1,20 @@
+R_eq per molecule = argmin_R E0(R), the active-space (CAS, STO-3G) ground-state energy
+minimum of the same Hamiltonian the pipeline builds. Used to normalize the cross-molecule
+overlay figure's x-axis (R / R_eq). Same definition for ALL molecules incl. H4 (per briefing #3).
+
+CORRECTED VALUES (wide scan, all interior minima verified — scripts/_req_wide.py):
+  R_EQ = {'h4': 1.68, 'lih': 2.86, 'beh2': 2.44, 'n2': 2.24}   # Angstrom
+    h4    R_eq = 1.68 A   E0 = -2.180505  Ha   scan[0.60,3.00]  interior-min OK
+    lih   R_eq = 2.86 A   E0 = -7.865222  Ha   scan[1.20,3.60]  interior-min OK
+    beh2  R_eq = 2.44 A   E0 = -15.567328 Ha   scan[1.00,3.40]  interior-min OK
+    n2    R_eq = 2.24 A   E0 = -107.616462 Ha  scan[0.90,2.80]  interior-min OK
+
+BUG IN COMMITTED scripts/compute_req.py (flag for Local Claude):
+  Its narrow scan windows make argmin hit the UPPER boundary for ALL FOUR molecules, so its
+  reported values are wrong (lower bounds, not true minima):
+    original (buggy) R_EQ = {'h4': 1.6, 'lih': 2.2, 'beh2': 1.8, 'n2': 1.6}
+  Evidence (n2): E0(1.60)=-106.973 > E0(2.00)=-107.514 -> energy still falling at the edge;
+  true min ~2.24. Fix = widen SCANS upper bounds (used here: h4 3.0, lih 3.6, beh2 3.4, n2 2.8).
+
+Note: these CAS/STO-3G minima are larger than physical equilibria (e.g. n2 physical ~1.10 A)
+because of the minimal active space; that's expected and consistent across molecules.
