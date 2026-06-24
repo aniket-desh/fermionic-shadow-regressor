@@ -62,6 +62,15 @@ done
   looks right (deep green across [1.0,3.2]×[0,1200], behaviour degrading out beyond the
   box in R∈[0.8,3.6]), and the pushed paths.
 
+## Bonus (tiny, ~seconds) — report R_eq for all four molecules
+We need each molecule's equilibrium bond length to normalize the overlay figure's
+x-axis (R/R_eq); H4 (a model chain) has no literature value, so we compute it.
+```bash
+cd models && python -m scripts.compute_req
+```
+Report the printed `R_EQ = {...}` dict (h4/lih/beh2/n2). It just diagonalizes the
+active-space Hamiltonian over a fine R scan and takes the energy minimum.
+
 ## Not needed here
 H4's grid is the only remaining piece for the averaged heatmap, and H4 isn't on this pod
 (its checkpoint is on HuggingFace at `aniketdesh/molecular-shadows-h4`). We'll handle H4
