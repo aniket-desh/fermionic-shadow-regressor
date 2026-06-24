@@ -445,6 +445,14 @@ def plot_coherence_heatmap(handle, model, test_r_indices, device, save_dir, wind
     path = os.path.join(save_dir, "coherence_heatmap.pdf")
     fig.savefig(path)
     plt.close(fig)
+    # Also dump the raw r(R,t) grid + axes, for downstream use such as the
+    # cross-molecule averaged coherence heatmap (which normalizes R by R_eq and
+    # t by the horizon, then averages the grids).
+    np.savez(
+        os.path.join(save_dir, "coherence_grid.npz"),
+        corr=corr_map, R=np.array(Rs), t=t_centers,
+        train_R_range=np.array(train_R_range), train_t_range=np.array(train_t_range),
+    )
     print(f"[done] {path}")
 
 

@@ -7,11 +7,16 @@ all_data.npy
 research-logs/
 tmp/
 
-# Secrets / API tokens — NEVER commit (public repo)
+# Secrets / API tokens — NEVER commit (public repo). Broad on purpose:
+# put any HF/API token here under one of these names.
 hf.txt
+hftok
 *.token
-*token*.txt
+*token*
+*tok
 .env
+*.key
+*.secret
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
