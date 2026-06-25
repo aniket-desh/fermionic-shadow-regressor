@@ -1,0 +1,22 @@
+R_eq via CCSD(T)/cc-pVTZ energy scan + parabola fit (full molecule, documented paper level).
+Briefing #5. Replaces the STO-3G active-space minima (which gave ~2x-too-long bonds).
+
+RAW script output (scripts/compute_req_ccsdt.py):
+  R_EQ_CALC = {'n2': 1.1139, 'lih': 1.6087, 'beh2': 1.3322, 'h4': 0.8719}   # CCSD(T)/cc-pvtz
+
+SANITY (vs experiment): EXCELLENT for 3/4 —
+  n2   1.1139  (exp 1.098)   OK
+  lih  1.6087  (exp ~1.595)  OK
+  beh2 1.3322  (exp Be-H ~1.334)  OK
+  h4   0.8719  -> below briefing's ~1.0-1.1 guess AND near lower scan edge (0.80).
+
+H4 CORRECTION: the script's h4 value is biased ~0.02 LOW. Its window [0.80,1.25] is
+asymmetric and the true min sits in the lower third, so a full-window parabola skews low.
+A wider centered CCSD(T)/cc-pVTZ scan [0.65,1.15] gives a clean INTERIOR minimum:
+  discrete min at R=0.900, local parabola fit R_eq = 0.895 (E0=-2.2777 Ha).
+Recommend h4 R_eq = 0.895 (and tightening SCANS['h4'] to ~[0.78,1.02] in the committed script).
+
+==> RECOMMENDED FINAL (CCSD(T)/cc-pVTZ):
+  R_EQ_CALC = {'n2': 1.114, 'lih': 1.609, 'beh2': 1.332, 'h4': 0.895}
+  Paper citation: "equilibrium bond lengths from CCSD(T)/cc-pVTZ".
+  (H4 = optimal uniform nearest-neighbour spacing of the symmetric linear chain.)

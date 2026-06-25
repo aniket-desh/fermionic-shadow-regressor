@@ -1,0 +1,6 @@
+n2     R_eq = 1.1139 Ang   (cc-pvtz CCSD(T), parabola fit)
+lih    R_eq = 1.6087 Ang   (cc-pvtz CCSD(T), parabola fit)
+beh2   R_eq = 1.3322 Ang   (cc-pvtz CCSD(T), parabola fit)
+h4     R_eq = 0.8719 Ang   (cc-pvtz CCSD(T), parabola fit)
+
+R_EQ_CALC = {'n2': 1.1139, 'lih': 1.6087, 'beh2': 1.3322, 'h4': 0.8719}    # level: CCSD(T)/cc-pvtz
