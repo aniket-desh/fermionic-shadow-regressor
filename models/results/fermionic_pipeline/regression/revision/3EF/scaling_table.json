@@ -1,0 +1,42 @@
+{
+  "h4": {
+    "mol": "h4",
+    "qubits": 8,
+    "hilbert_dim": 256,
+    "N_T": 6001,
+    "N_R": 251,
+    "N_Q": 500,
+    "K": 120,
+    "datagen_geom_sum_s": null
+  },
+  "lih": {
+    "mol": "lih",
+    "qubits": 8,
+    "hilbert_dim": 256,
+    "N_T": 4801,
+    "N_R": 221,
+    "N_Q": 500,
+    "K": 120,
+    "datagen_geom_sum_s": 268461.9
+  },
+  "beh2": {
+    "mol": "beh2",
+    "qubits": 8,
+    "hilbert_dim": 256,
+    "N_T": 1001,
+    "N_R": 201,
+    "N_Q": 500,
+    "K": 120,
+    "datagen_geom_sum_s": null
+  },
+  "n2": {
+    "mol": "n2",
+    "qubits": 8,
+    "hilbert_dim": 256,
+    "N_T": 1001,
+    "N_R": 141,
+    "N_Q": 500,
+    "K": 120,
+    "datagen_geom_sum_s": null
+  }
+}

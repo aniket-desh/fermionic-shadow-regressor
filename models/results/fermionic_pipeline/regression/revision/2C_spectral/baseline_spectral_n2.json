@@ -1,0 +1,6 @@
+{
+  "mol": "n2",
+  "peak_recovery_rate": 0.869047619047619,
+  "n_test": 28,
+  "tol": 0.05
+}
