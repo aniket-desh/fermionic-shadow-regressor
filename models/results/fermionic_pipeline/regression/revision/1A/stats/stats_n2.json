@@ -1,0 +1,44 @@
+{
+  "molecule": "n2",
+  "n_seeds": 5,
+  "seeds": [
+    42,
+    1729,
+    7,
+    13,
+    101
+  ],
+  "per_seed": {
+    "42": {
+      "pearson_mean": 0.9687031079925534,
+      "pearson_median": 0.9974651942012664
+    },
+    "1729": {
+      "pearson_mean": 0.9763465771878704,
+      "pearson_median": 0.9994157298869255
+    },
+    "7": {
+      "pearson_mean": 0.8933706270965803,
+      "pearson_median": 0.9987278478056885
+    },
+    "13": {
+      "pearson_mean": -0.005315853321413872,
+      "pearson_median": -0.0025582571092083598
+    },
+    "101": {
+      "pearson_mean": 0.9347791419659243,
+      "pearson_median": 0.9990187758389638
+    }
+  },
+  "pearson_mean": {
+    "mean": 0.7535767201843029,
+    "std": 0.38057860268603344,
+    "min": -0.005315853321413872,
+    "max": 0.9763465771878704
+  },
+  "pearson_median": {
+    "mean": 0.7984138581247271,
+    "std": 0.40048658996304165
+  },
+  "note": "--seed seeds BOTH weight init AND the 20% geometry split, so 5 seeds = 5 init+split combos (covers seed-variance AND geometry-split-variance in one set)"
+}
