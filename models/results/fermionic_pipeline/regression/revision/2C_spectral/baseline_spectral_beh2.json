@@ -1,0 +1,6 @@
+{
+  "mol": "beh2",
+  "peak_recovery_rate": 0.85,
+  "n_test": 40,
+  "tol": 0.05
+}

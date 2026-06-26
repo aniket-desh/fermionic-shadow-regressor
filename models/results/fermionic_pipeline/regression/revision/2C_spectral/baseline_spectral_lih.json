@@ -1,0 +1,6 @@
+{
+  "mol": "lih",
+  "peak_recovery_rate": 1.0,
+  "n_test": 44,
+  "tol": 0.05
+}
