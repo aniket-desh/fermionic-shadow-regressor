@@ -79,11 +79,9 @@ def main():
         ax.grid(True, color="0.9", lw=0.5)
         ax.set_xlabel("$R$ (Å)")
     axA.set_ylabel(r"$\omega_\mathrm{op}(R)$ ($E_\mathrm{h}$)")
-    axA.set_title(r"Bandwidth: sets $\Delta t \leq \pi/\omega_\mathrm{op}$")
     axA.legend(frameon=False, ncol=2, fontsize=6, handlelength=1.4)
     axB.set_yscale("log")
     axB.set_ylabel(r"co-dominant spacing $\delta\omega(R)$ ($E_\mathrm{h}$)")
-    axB.set_title(r"Resolution: $\delta\omega < 2\pi/t_\mathrm{max}$ (dashed) congests")
     axB.text(0.02, 0.04, "down-markers: congested (predicted failure)",
              transform=axB.transAxes, fontsize=5.5, color="0.3")
 

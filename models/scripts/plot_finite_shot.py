@@ -53,7 +53,6 @@ def main():
     axS.set_xscale("log")
     axS.set_xlabel("Born samples per $(Q,R,t)$, $S$")
     axS.set_ylabel("median held-out Pearson $r$")
-    axS.set_title("Shot-noise robustness")
     axS.set_ylim(0, 1.05)
 
     # --- N_Q sweep (median); the N_Q=500 reference is the S=inf run ---
@@ -66,7 +65,6 @@ def main():
     axN.set_xscale("log")
     axN.set_xlabel("matchgate library size $N_Q$")
     axN.set_ylabel("median held-out Pearson $r$")
-    axN.set_title("Library-size sensitivity")
     axN.set_ylim(0, 1.05)
 
     for ax in (axS, axN):

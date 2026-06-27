@@ -115,8 +115,6 @@ def main():
     axg.grid(True, color="0.9", lw=0.5)
     axg.legend(loc="lower left", frameon=False, fontsize=6)
 
-    fig.suptitle("Held-out temporal correlation versus normalized bond length "
-                 "(4 molecules, 5 seeds)", y=0.98)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     fig.savefig(OUT)
     plt.close(fig)

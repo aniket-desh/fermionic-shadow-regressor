@@ -28,12 +28,12 @@ OUT = os.path.join(os.path.dirname(__file__), "..", "results", "paper_figures",
                    "baseline_comparison.pdf")
 
 MOLS = [("h4", "H$_4$"), ("n2", "N$_2$"), ("beh2", "BeH$_2$"), ("lih", "LiH")]
-# (label, json template, colour); FSR first
+# (label, json template, viridis position); FSR first, darkest -> baselines lighter
 METHODS = [
-    ("FSR",              None,                              "#1b1b1b"),
-    ("linear-harmonic",  "1C_linharm/baseline_linharm_{}.json",  "#2c7fb8"),
-    ("Fourier MLP",      "2A_fourmlp/baseline_fourmlp_{}.json",   "#41b6c4"),
-    ("GP / KRR",         "2B_gpkrr/baseline_gpkrr_{}.json",       "#c7c7c7"),
+    ("FSR",              None,                                   0.15),
+    ("linear-harmonic",  "1C_linharm/baseline_linharm_{}.json",  0.45),
+    ("Fourier MLP",      "2A_fourmlp/baseline_fourmlp_{}.json",   0.65),
+    ("GP / KRR",         "2B_gpkrr/baseline_gpkrr_{}.json",       0.82),
 ]
 
 
@@ -60,10 +60,11 @@ def main():
     x = np.arange(n_m)
     w = 0.8 / nb
 
+    base = plt.get_cmap("viridis")
     fig, ax = plt.subplots(figsize=(ONEHALF_COL, ONEHALF_COL * 0.62))
-    for i, (lab, _, col) in enumerate(METHODS):
+    for i, (lab, _, pos) in enumerate(METHODS):
         off = (i - (nb - 1) / 2) * w
-        bars = ax.bar(x + off, vals[lab], w, label=lab, color=col,
+        bars = ax.bar(x + off, vals[lab], w, label=lab, color=base(pos),
                       edgecolor="0.2" if lab == "FSR" else "none", linewidth=0.5, zorder=3)
         if lab == "FSR":
             for b, v in zip(bars, vals[lab]):
@@ -76,12 +77,6 @@ def main():
     ax.set_xticklabels([lab for _, lab in MOLS])
     ax.set_ylabel("held-out temporal Pearson $r$")
     ax.set_ylim(0, 1.08)
-    ax.set_title("FSR vs. matched classical surrogates (seed 42)")
-    # honest note: linear-harmonic ties BeH2
-    j = [m for m, _ in MOLS].index("beh2")
-    ax.annotate("fixed bank\nties here", xy=(x[j], 1.0), xytext=(x[j] - 0.15, 0.62),
-                fontsize=5, color="0.35", ha="center",
-                arrowprops=dict(arrowstyle="-", color="0.6", lw=0.6))
     ax.legend(ncol=2, frameon=False, fontsize=6, loc="lower center",
               bbox_to_anchor=(0.5, -0.32), columnspacing=1.5)
     fig.tight_layout()

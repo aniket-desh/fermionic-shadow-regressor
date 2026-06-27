@@ -87,10 +87,8 @@ def main():
     fig, (a1, a2) = plt.subplots(1, 2, figsize=(DOUBLE_COL, DOUBLE_COL * 0.42))
     draw(a1, raw, color, "1mr", label_end=True)
     a1.set_ylabel(r"decorrelation $1-r$")
-    a1.set_title("Phase fidelity")
     draw(a2, raw, color, "absdev", label_end=True)
     a2.set_ylabel(r"$|\mathrm{range\ ratio}-1|$")
-    a2.set_title("Dynamic-range fidelity")
     fig.text(0.5, 0.005, "shaded: pre-flight-congested N$_2$ region (predicted failure)",
              ha="center", fontsize=5.5, color="0.4")
     fig.tight_layout(rect=[0, 0.02, 1, 1])
@@ -102,7 +100,6 @@ def main():
     figm, axm = plt.subplots(figsize=(DOUBLE_COL * 0.5, DOUBLE_COL * 0.42))
     draw(axm, raw, color, "mse", label_end=True)
     axm.set_ylabel("prediction MSE")
-    axm.set_title("Prediction MSE versus normalized bond length")
     figm.tight_layout()
     figm.savefig(os.path.join(ODIR, "overlay_mse_appendix.pdf"))
     plt.close(figm)

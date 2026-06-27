@@ -70,10 +70,9 @@ def main():
         ax.grid(True, color="0.9", lw=0.5)
         ax.set_xlim(0.5, 2.6)
     axA.axhline(40, color="0.5", ls=(0, (4, 3)), lw=0.8)
-    axA.text(2.55, 40, "full budget", ha="right", va="bottom", color="0.5", fontsize=5)
+    axA.text(0.55, 40.5, "full budget", ha="left", va="bottom", color="0.5", fontsize=5)
     axA.set_ylabel("time-point acquisitions saved")
     axA.set_ylim(-2, 44)
-    axA.set_title("Time-point acquisitions removed by the FSR prior")
     axA.legend(loc="center right", frameon=False, fontsize=6.5, handletextpad=0.4)
     axB.axhline(5, color="0.35", ls="--", lw=0.9)
     axB.text(0.52, 5.2, "5\\% (hybrid DFT)", color="0.35", fontsize=5, va="bottom")
@@ -81,7 +80,6 @@ def main():
     axB.text(0.52, 1.15, "1\\%", color="0.6", fontsize=5, va="bottom")
     axB.set_yscale("log")
     axB.set_ylabel(r"zero-sample dipole error (\%)")
-    axB.set_title("Zero-sample accuracy of the FSR prior")
     fig.text(0.5, 0.005, "samples = actively sampled time points (acquisition-cost proxy); "
              "filled markers clear 5\\% at zero samples",
              ha="center", fontsize=5, color="0.4")

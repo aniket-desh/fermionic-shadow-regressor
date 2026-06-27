@@ -50,7 +50,6 @@ def freq_recovery():
     ax.set_xscale("log"); ax.set_yscale("log")
     ax.set_xlabel(r"co-dominant line spacing $\delta\omega$ ($E_\mathrm{h}$)")
     ax.set_ylabel(r"FSR nearest-line freq.\ error ($E_\mathrm{h}$)")
-    ax.set_title("Recovered Bohr frequencies vs. line spacing")
     ax.grid(True, which="major", color="0.88", lw=0.5)
     ax.legend(frameon=False, fontsize=6, loc="upper left")
     fig.tight_layout()
@@ -78,7 +77,6 @@ def smoothness():
                         (axt, "Temporal bandwidth $S_t(R)$", r"$\langle\|\partial_t\langle\Gamma\rangle\|\rangle$")]:
         ax.set_xlabel("$R$ (Å)")
         ax.set_ylabel(yl)
-        ax.set_title(ttl)
         ax.grid(True, color="0.9", lw=0.5)
     axR.legend(frameon=False, fontsize=6, ncol=2)
     fig.tight_layout()
