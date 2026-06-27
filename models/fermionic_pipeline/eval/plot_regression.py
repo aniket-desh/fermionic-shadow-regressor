@@ -165,23 +165,20 @@ def plot_summary(handle, model, test_r_indices, device, save_dir):
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(DOUBLE_COL, DOUBLE_COL / 3.4))
 
     ax1.plot(Rs, pearsons, "o-", color="tab:blue")
-    ax1.set_xlabel(r"$R$ (\AA)")
+    ax1.set_xlabel("$R$ (Å)")
     ax1.set_ylabel(r"Mean Pearson $r$")
-    ax1.set_title(r"Observable correlation vs $R$")
     ax1.set_ylim(-0.2, 1.05)
     ax1.axhline(0, color="gray", linewidth=0.5)
     ax1.grid(True, alpha=0.3)
 
     ax2.semilogy(Rs, mses, "o-", color="tab:red")
-    ax2.set_xlabel(r"$R$ (\AA)")
+    ax2.set_xlabel("$R$ (Å)")
     ax2.set_ylabel("MSE")
-    ax2.set_title(r"Prediction error vs $R$")
     ax2.grid(True, alpha=0.3)
 
     ax3.plot(Rs, range_ratios, "o-", color="tab:green")
-    ax3.set_xlabel(r"$R$ (\AA)")
+    ax3.set_xlabel("$R$ (Å)")
     ax3.set_ylabel("Range ratio (model/exact)")
-    ax3.set_title(r"Amplitude ratio vs $R$")
     ax3.axhline(1.0, color="gray", linewidth=0.5, linestyle="--")
     ax3.set_ylim(0, 2.0)
     ax3.grid(True, alpha=0.3)
@@ -193,8 +190,10 @@ def plot_summary(handle, model, test_r_indices, device, save_dir):
     print(f"[done] {path}")
 
 
-def plot_time_series(handle, model, test_r_indices, device, save_dir, n_obs=4, n_geom=7):
-    """Example observable time series across geometries."""
+def plot_time_series(handle, model, test_r_indices, device, save_dir, n_obs=3, n_geom=3):
+    """Curated observable time series: n_geom geometries (compressed / near-equilibrium /
+    stretched) x n_obs channels spanning the signal-variance range (loud -> quiet, an
+    easy -> hard proxy). Defaults give a readable 3x3 grid rather than a dense notebook dump."""
     # Pick n_geom geometries evenly spanning the test set
     n_test = len(test_r_indices)
     if n_test <= n_geom:
@@ -212,16 +211,25 @@ def plot_time_series(handle, model, test_r_indices, device, save_dir, n_obs=4, n
         D_model = predict_signal_matrix(model, R, handle.times, device, orb_energies=_get_orb_energies(handle, r_idx), omega_op=_get_omega_op(handle, r_idx))
         D_exact = handle.expectations[r_idx].T  # (K, N_t)
 
-        # Pick observables with largest exact signal variance
+        # Pick channels spanning the signal-variance range (loud -> quiet), an easy -> hard
+        # proxy, after dropping dead channels -- not the n_obs loudest, which look alike.
         variances = np.var(D_exact, axis=1)
-        top_obs = np.argsort(variances)[::-1][:n_obs]
+        order = np.argsort(variances)[::-1]
+        order = order[variances[order] > 1e-6 * variances.max()]
+        if len(order) >= n_obs:
+            pick = np.linspace(0, len(order) - 1, n_obs).round().astype(int)
+            top_obs = order[pick]
+        else:
+            top_obs = order[:n_obs]
 
         for col, obs_idx in enumerate(top_obs):
             ax = axes[row, col]
             t = handle.times
             ax.plot(t, D_exact[obs_idx], "b-", alpha=0.7, linewidth=0.8, label="Exact")
             ax.plot(t, D_model[obs_idx], "r-", alpha=0.6, linewidth=0.8, label="Model")
-            key = handle.observable_keys[obs_idx]
+            key = handle.observable_keys[int(obs_idx)]
+            if hasattr(key, "item"):       # unwrap numpy scalars so titles read "obs 13", not "np.int32(13)"
+                key = key.item()
             ax.set_title(rf"$R={R:.2f}$, obs {tex_escape(key)}")
             if row == len(indices) - 1:
                 ax.set_xlabel(r"$t$ (a.u.)")
@@ -229,8 +237,7 @@ def plot_time_series(handle, model, test_r_indices, device, save_dir, n_obs=4, n
                 ax.set_ylabel(r"$\langle\Gamma\rangle$")
                 ax.legend()
 
-    fig.suptitle("Observable time series: Model (red) vs Exact (blue)")
-    fig.tight_layout(rect=[0, 0, 1, 0.96])
+    fig.tight_layout()
     path = os.path.join(save_dir, "time_series.pdf")
     fig.savefig(path)
     plt.close(fig)
@@ -399,8 +406,8 @@ def plot_coherence_heatmap(handle, model, test_r_indices, device, save_dir, wind
         interpolation="nearest",
     )
     ax.set_xlabel(r"$t$ (a.u.)")
-    ax.set_ylabel(r"$R$ (\AA)")
-    ax.set_title(r"Windowed Pearson $r(R, t)$ --- model vs.\ exact observables")
+    ax.set_ylabel("$R$ (Å)")
+    ax.set_title(r"Windowed Pearson $r(R, t)$ — model vs. exact observables")
     plt.colorbar(im, ax=ax, label=r"Pearson $r$")
 
     # Training-data bounding box. Defaults to the full dataset (R, t) extent; the
@@ -431,8 +438,8 @@ def plot_coherence_heatmap(handle, model, test_r_indices, device, save_dir, wind
         omask = np.ones_like(corr_map, dtype=bool)
         omask[np.ix_(in_R, in_t)] = False
         ax.text(0.015, 0.03,
-                f"in-box  $\\bar r$={np.nanmean(inbox):.2f}     "
-                f"out-of-box  $\\bar r$={np.nanmean(corr_map[omask]):.2f}",
+                f"in-box  $\\bar{{r}}$ ={np.nanmean(inbox):.2f}     "
+                f"out-of-box  $\\bar{{r}}$ ={np.nanmean(corr_map[omask]):.2f}",
                 transform=ax.transAxes, color="#0b3dff",
                 bbox=dict(boxstyle="round", fc="white", ec="#0b3dff", alpha=0.85))
     # Expand limits so the box is fully visible even when eval ⊆ training (now)
