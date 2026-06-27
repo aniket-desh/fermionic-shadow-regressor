@@ -108,6 +108,20 @@ def apply_nature_style(usetex: bool = True, sans: bool | None = None,
     import matplotlib as mpl
     from cycler import cycler
 
+    # Graceful fallback: LaTeX text rendering needs `latex`/`dvipng`/`ghostscript`
+    # on PATH. If they're absent (e.g. a minimal RunPod image), fall back to
+    # Matplotlib's mathtext renderer instead of crashing every figure.
+    if usetex:
+        import shutil
+        if shutil.which("latex") is None or shutil.which("dvipng") is None:
+            import warnings
+            warnings.warn(
+                "apply_nature_style: 'latex'/'dvipng' not found on PATH; falling "
+                "back to Matplotlib mathtext (pass usetex=False to silence).",
+                RuntimeWarning, stacklevel=2,
+            )
+            usetex = False
+
     sans = USE_SANS if sans is None else sans
     colorblind = COLORBLIND if colorblind is None else colorblind
 
