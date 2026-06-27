@@ -22,13 +22,15 @@ for mol in h4 lih; do for nq in $NQS; do
     --r_start "${R0[$mol]}" --r_end "${R1[$mol]}" --r_step 0.05 --t_max "${TM[$mol]}" \
     --n_times 1001 --n_q "$nq" --n_workers 15
   python -m fermionic_pipeline.data.compute_omega_op --data_path "$data"
+  # use the CLEAN (diagonalization-pre-flight) omega_op, not the small-N_Q-noise-inflated one
+  python3 -c "import h5py; r=h5py.File('$FS/${mol}_Sinf/regression_targets.h5')['omega_op'][:]; f=h5py.File('$data','r+'); f['omega_op'][...]=r; f.close()"
 done; done
 
-echo "=== PHASE 2: train + eval (own held-out) ==="
+echo "=== PHASE 2: train + eval (vs clean N_Q=500 reference held-out) ==="
 JOBF=runpod_logs/jobs_2Dnq.txt; : > "$JOBF"
 for mol in h4 lih; do for nq in $NQS; do
-  data=$RR/${mol}_nq${nq}/regression_targets.h5
-  echo "MOL=$mol SEED=42 FLOOR=${FL[$mol]} DATA=$data SAVE=$RR/${mol}_nq${nq}_model OMP=2 bash scripts/revision/train_eval.sh > runpod_logs/nq_${mol}_${nq}.log 2>&1" >> "$JOBF"
+  data=$RR/${mol}_nq${nq}/regression_targets.h5; ref=$FS/${mol}_Sinf/regression_targets.h5
+  echo "MOL=$mol SEED=42 FLOOR=${FL[$mol]} DATA=$data EVAL_DATA=$ref SAVE=$RR/${mol}_nq${nq}_model OMP=2 bash scripts/revision/train_eval.sh > runpod_logs/nq_${mol}_${nq}.log 2>&1" >> "$JOBF"
 done; done
 bash scripts/revision/fleet_runner.sh "$JOBF" 8
 echo "NQSWEEP_ALL_DONE"
