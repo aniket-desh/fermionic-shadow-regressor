@@ -83,15 +83,39 @@ def _trace_gamma_times(matrix, target_idx, phase):
 
 # ── PennyLane dipole operator (same JW as the Hamiltonian / psi0) ────────────
 
-def _dipole_matrices(n_atoms, R, n_qubits):
+def _dipole_matrices(molecule, R, n_qubits):
     """Return [mu_x, mu_y, mu_z] as dense (2^n, 2^n) matrices in PennyLane's JW,
-    built identically to how build_hydrogen_chain_hamiltonian builds H."""
+    built in the SAME active space as the Hamiltonian (build_molecule_hamiltonian).
+
+    H-chains keep the original full-space path byte-for-byte; named molecules
+    (LiH, ...) freeze the core via qml.qchem.active_space with the SAME
+    (active_electrons, active_orbitals) partition the Hamiltonian uses, so mu^a
+    acts on the same n_qubits as the Gamma_mu channels."""
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from fermionic_pipeline.data.generate_shadows import (
+        _parse_molecule, _MOLECULE_SPECS, _molecule_coordinates,
+    )
     import pennylane as qml
 
-    symbols = ["H"] * n_atoms
-    coordinates = np.array([[i * R, 0.0, 0.0] for i in range(n_atoms)], dtype=float)
-    mol = qml.qchem.Molecule(symbols, coordinates, charge=0, mult=1, basis_name="sto-3g")
-    ops = qml.qchem.dipole_moment(mol, mapping="jordan_wigner")()  # [x, y, z]
+    kind, payload = _parse_molecule(molecule)
+    if kind == "hchain":  # full active space — original H-chain path, unchanged
+        n_atoms = payload
+        symbols = ["H"] * n_atoms
+        coordinates = np.array([[i * R, 0.0, 0.0] for i in range(n_atoms)], dtype=float)
+        mol = qml.qchem.Molecule(symbols, coordinates, charge=0, mult=1, basis_name="sto-3g")
+        ops = qml.qchem.dipole_moment(mol, mapping="jordan_wigner")()  # [x, y, z]
+    else:                 # named molecule — same core/active partition as the Hamiltonian
+        spec = _MOLECULE_SPECS[payload]
+        coordinates = _molecule_coordinates(spec, R).reshape(-1, 3)
+        mol = qml.qchem.Molecule(spec["symbols"], coordinates, charge=spec["charge"],
+                                 mult=spec["mult"], basis_name="sto-3g")
+        core, active = qml.qchem.active_space(
+            mol.n_electrons, mol.n_orbitals, mult=spec["mult"],
+            active_electrons=spec["ae"], active_orbitals=spec["ao"])
+        ops = qml.qchem.dipole_moment(mol, core=core, active=active,
+                                      mapping="jordan_wigner")()  # [x, y, z]
     mats = []
     for op in ops:
         m = qml.matrix(op, wire_order=range(n_qubits))
@@ -99,9 +123,9 @@ def _dipole_matrices(n_atoms, R, n_qubits):
     return mats
 
 
-def _coeffs_for_geometry(n_atoms, R, n_qubits, keys):
+def _coeffs_for_geometry(molecule, R, n_qubits, keys):
     """c^a_mu = Tr(Gamma_mu mu^a)/2^n  and  c0^a = Tr(mu^a)/2^n."""
-    mats = _dipole_matrices(n_atoms, R, n_qubits)
+    mats = _dipole_matrices(molecule, R, n_qubits)
     dim = 1 << n_qubits
     c = np.zeros((3, len(keys)), dtype=float)
     c0 = np.zeros(3, dtype=float)
@@ -115,19 +139,20 @@ def _coeffs_for_geometry(n_atoms, R, n_qubits, keys):
     return c, c0, mats, actions
 
 
-def _self_test(n_atoms, R, n_qubits, keys, h5_expect_t0=None):
+def _self_test(molecule, R, n_qubits, keys, h5_expect_t0=None):
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
     from fermionic_pipeline.data.generate_shadows import (
-        build_hydrogen_chain_hamiltonian, prepare_initial_state,
+        build_molecule_hamiltonian, prepare_initial_state, molecule_n_electrons,
     )
 
-    H_sparse, nq = build_hydrogen_chain_hamiltonian(n_atoms, R)
+    H_sparse, nq = build_molecule_hamiltonian(molecule, R)
     assert nq == n_qubits, f"n_qubits mismatch: {nq} != {n_qubits}"
-    psi0, _eigvals = prepare_initial_state(H_sparse, n_qubits, n_electrons=n_atoms)
+    psi0, _eigvals = prepare_initial_state(
+        H_sparse, n_qubits, n_electrons=molecule_n_electrons(molecule))
     psi0 = np.asarray(psi0, dtype=np.complex128).reshape(-1)
 
-    c, c0, mats, actions = _coeffs_for_geometry(n_atoms, R, n_qubits, keys)
+    c, c0, mats, actions = _coeffs_for_geometry(molecule, R, n_qubits, keys)
     gamma_exp = np.array([_majorana_expectation(psi0, tgt, ph) for tgt, ph in actions])
 
     print(f"  R={R:.3f}  n_qubits={n_qubits}  K={len(keys)}")
@@ -153,34 +178,43 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data_h5", type=Path, required=True,
                     help="dataset h5 — supplies the R grid (and t=0 targets for the self-test)")
-    ap.add_argument("--n_atoms", type=int, default=4)
+    ap.add_argument("--n_atoms", type=int, default=4,
+                    help="linear H-chain length (used when --molecule is not given)")
+    ap.add_argument("--molecule", type=str, default=None,
+                    help="named active-space molecule (e.g. 'lih'); default uses --n_atoms H-chain")
     ap.add_argument("--out", type=Path, default=None)
     ap.add_argument("--self_test", action="store_true",
                     help="validate conventions on the first geometry, then exit")
     args = ap.parse_args()
 
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
     import h5py
     from fermionic_pipeline.data.regression_dataset import majorana_2pt_keys
+    from fermionic_pipeline.data.generate_shadows import _parse_molecule, _MOLECULE_SPECS
+
+    # molecule = named spec if given, else the H-chain length (int)
+    molecule = args.molecule if args.molecule is not None else args.n_atoms
+    kind, payload = _parse_molecule(molecule)
+    n_qubits = 2 * payload if kind == "hchain" else 2 * _MOLECULE_SPECS[payload]["ao"]
+    keys = majorana_2pt_keys(2 * n_qubits)  # 2*n_qubits Majorana modes
+    assert n_qubits != 8 or len(keys) == 120
 
     with h5py.File(args.data_h5, "r") as f:
         R_values = np.array(f["R_values"][...], dtype=float)
         expect_t0 = np.array(f["expectations"][:, 0, :], dtype=float) if "expectations" in f else None
 
-    n_qubits = 2 * args.n_atoms
-    keys = majorana_2pt_keys(2 * n_qubits)  # 2*n_qubits Majorana modes
-    assert len(keys) == 120 if args.n_atoms == 4 else True
-
     if args.self_test:
-        print("=== SELF-TEST (single geometry) ===")
-        _self_test(args.n_atoms, float(R_values[len(R_values) // 2]), n_qubits, keys,
+        print(f"=== SELF-TEST (single geometry, molecule={molecule}) ===")
+        _self_test(molecule, float(R_values[len(R_values) // 2]), n_qubits, keys,
                    h5_expect_t0=expect_t0[len(R_values) // 2] if expect_t0 is not None else None)
         return
 
-    print(f"=== Computing dipole coeffs over {len(R_values)} geometries (n_qubits={n_qubits}, K={len(keys)}) ===")
+    print(f"=== Computing dipole coeffs over {len(R_values)} geometries (molecule={molecule}, n_qubits={n_qubits}, K={len(keys)}) ===")
     c_all = np.zeros((len(R_values), 3, len(keys)), dtype=float)
     c0_all = np.zeros((len(R_values), 3), dtype=float)
     for i, R in enumerate(R_values):
-        c, c0, _, _ = _coeffs_for_geometry(args.n_atoms, float(R), n_qubits, keys)
+        c, c0, _, _ = _coeffs_for_geometry(molecule, float(R), n_qubits, keys)
         c_all[i], c0_all[i] = c, c0
         if i % 25 == 0:
             print(f"  [{i+1}/{len(R_values)}] R={R:.3f}")

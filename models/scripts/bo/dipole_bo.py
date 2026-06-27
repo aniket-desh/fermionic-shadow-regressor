@@ -95,6 +95,14 @@ def _bo_one_geometry(handle, model, R_npz, cx, t, x_cand, stride, fft_freq, args
                 orb_energies=_get_orb_energies(handle, ri),
                 omega_op=_get_omega_op(handle, ri)).T
     mu_fsr = D_pred @ c
+    if getattr(args, "dynamic", False):
+        # Score the mean-subtracted (dynamic) dipole. For heteronuclear molecules
+        # (e.g. LiH) the static/permanent component dominates sqrt(mean(mu^2)), so
+        # the 5% relative tolerance is trivially met by the DC alone. Subtracting
+        # each trace's own time-mean leaves the spectroscopically informative
+        # oscillation, giving a fair samples-to-tolerance comparison.
+        mu_exact = mu_exact - mu_exact.mean()
+        mu_fsr = mu_fsr - mu_fsr.mean()
     y_true = mu_exact[::stride]
     prior_fsr = _interp_fn(t, mu_fsr)
     prior_flat = lambda x: np.zeros(len(np.asarray(x, float).reshape(-1)))
@@ -152,7 +160,11 @@ def main():
     ap.add_argument("--target_rmse", type=float, default=0.0, help="absolute RMSE override; 0 = rel_error*||mu||")
     ap.add_argument("--fit_tmax", type=float, default=150.0,
                     help="time-axis limit for the fit-example panels (resolve oscillations / prior vs posterior)")
-    ap.add_argument("--molecule", default="H4", help="label for titles/filenames (H4 or H2)")
+    ap.add_argument("--molecule", default="H4", help="label for titles/filenames (e.g. H4, LiH)")
+    ap.add_argument("--dynamic", "--subtract_mean", dest="dynamic", action="store_true",
+                    help="score the mean-subtracted (dynamic) dipole — fair for heteronuclear "
+                         "molecules with a large permanent dipole (e.g. LiH); default keeps the "
+                         "DC-included trace so H4 is unchanged")
     ap.add_argument("--replot", default=None,
                     help="path to a saved *_plotdata_*.pkl — skip all compute and just rebuild the "
                          "figure (lets visual tweaks happen locally without the h5/checkpoint)")
