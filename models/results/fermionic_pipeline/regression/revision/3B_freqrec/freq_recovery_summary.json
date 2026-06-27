@@ -1,0 +1,17 @@
+{
+  "h4": {
+    "mol": "h4",
+    "nearest_line_dist_mean": 0.019418115665239665,
+    "n": 50
+  },
+  "lih": {
+    "mol": "lih",
+    "nearest_line_dist_mean": 0.0026877198111650725,
+    "n": 44
+  },
+  "beh2": {
+    "mol": "beh2",
+    "nearest_line_dist_mean": 0.03588385653484456,
+    "n": 40
+  }
+}
