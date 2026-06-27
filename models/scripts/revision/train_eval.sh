@@ -18,7 +18,8 @@ python -m fermionic_pipeline.training.regressor_trainer --data_path "$DATA" --sa
   --fourier_scale 20.0 --conditioned_frequencies --freq_net_hidden 128 --freq_net_layers 3 \
   $ADAPTF --omega_op_floor "$FLOOR" --explicit_amplitude --amp_rank "$AMPRANK" \
   --grad_clip 1.0 $ORBF --alpha_corr 1.0 --eval_every 2000
-echo "[eval] $SAVE"
-python -m fermionic_pipeline.eval.regressor_eval --data_path "$DATA" --checkpoint "$SAVE/regressor.pt" \
+EVAL_DATA=${EVAL_DATA:-$DATA}   # eval against a different (e.g. exact) held-out if set
+echo "[eval] $SAVE  (eval_data=$EVAL_DATA)"
+python -m fermionic_pipeline.eval.regressor_eval --data_path "$EVAL_DATA" --checkpoint "$SAVE/regressor.pt" \
   --save_dir "$SAVE/eval" --omega_op_source train-interp --device cuda --ljung_box_p 0.06
 echo "DONE_TRAINEVAL $SAVE"

@@ -424,6 +424,8 @@ def _compute_signal_block_fast(
     bit_array: np.ndarray,
     shadow_coeff: float,
     K: int,
+    shots=None,
+    rng=None,
 ) -> np.ndarray:
     """Time-batched analog of _compute_signal_row_fast.
 
@@ -445,6 +447,12 @@ def _compute_signal_block_fast(
         rotated = _apply_decomposition_batched(decompositions[q_idx], Psi, n_qubits)
         probs = np.abs(rotated) ** 2                                # (D, T)
         probs *= 1.0 / probs.sum(axis=0, keepdims=True)
+        if shots is not None:                                       # finite-shot: empirical marginals
+            emp = np.empty_like(probs)                              # from S Born samples per (Q,t)
+            for tt in range(T):
+                pv = probs[:, tt]; pv = pv / pv.sum()
+                emp[:, tt] = rng.multinomial(shots, pv)
+            probs = emp / float(shots)
         marginals = one_minus_bits_T @ probs                        # (n_qubits, T)
         expected_diag = 2.0 * marginals - 1.0                       # (n_qubits, T)
 
@@ -479,14 +487,19 @@ def _process_geometry(args):
     """Worker for multiprocessing: process one geometry."""
     # Support both old 10-tuple and new 13-tuple with Trotter params.
     # Position 3 carries the molecule spec (int n_atoms or "lih"-style name).
+    shots, shot_seed = None, 0
     if len(args) == 10:
         (r_idx, R, molecule, times, n_qubits, K,
          decompositions, vec_meta, bit_array, shadow_coeff) = args
         use_trotter, trotter_dt, trotter_order = False, None, 2
-    else:
+    elif len(args) == 13:
         (r_idx, R, molecule, times, n_qubits, K,
          decompositions, vec_meta, bit_array, shadow_coeff,
          use_trotter, trotter_dt, trotter_order) = args
+    else:  # 15-tuple: finite-shot (shots, shot_seed appended)
+        (r_idx, R, molecule, times, n_qubits, K,
+         decompositions, vec_meta, bit_array, shadow_coeff,
+         use_trotter, trotter_dt, trotter_order, shots, shot_seed) = args
 
     t_start = _time.time()
 
@@ -516,8 +529,10 @@ def _process_geometry(args):
     Psi = np.empty((dim, len(times)), dtype=np.complex128)
     for t_idx, t in enumerate(times):
         Psi[:, t_idx] = state_dict[t].astype(np.complex128)
+    rng = np.random.default_rng(shot_seed + r_idx) if shots is not None else None
     D = _compute_signal_block_fast(
         Psi, n_qubits, decompositions, vec_meta, bit_array, shadow_coeff, K,
+        shots=shots, rng=rng,
     )
 
     elapsed = _time.time() - t_start
@@ -545,6 +560,8 @@ class RegressionDatasetConfig:
     use_trotter: bool = False
     trotter_dt: Optional[float] = None
     trotter_order: int = 2
+    shots: Optional[int] = None   # finite-shot: S Born samples per (Q,R,t); None = exact marginals
+    shot_seed: int = 0
 
     def __post_init__(self):
         if self.molecule is None:
@@ -748,10 +765,11 @@ def generate_regression_dataset(
         # Parallel across geometries
         from multiprocessing import Pool
 
+        _shot_extra = (config.shots, config.shot_seed) if config.shots is not None else ()
         worker_args = [
             (r_idx, R, config.molecule, times, n_qubits, K,
              decompositions, vec_meta, bit_array, shadow_coeff,
-             config.use_trotter, config.trotter_dt, config.trotter_order)
+             config.use_trotter, config.trotter_dt, config.trotter_order) + _shot_extra
             for r_idx, R in enumerate(R_values)
         ]
 
@@ -962,6 +980,10 @@ def main():
                         help="Trotter step size (default: heuristic 0.5/||H||_1)")
     parser.add_argument("--trotter_order", type=int, default=2, choices=[1, 2],
                         help="Trotter order: 1 (Lie) or 2 (Suzuki, default)")
+    parser.add_argument("--shots", type=int, default=None,
+                        help="Finite-shot: S Born samples per (Q,R,t) -> empirical marginals "
+                             "(needs --n_workers>1). Default None = exact marginals (S=inf).")
+    parser.add_argument("--shot_seed", type=int, default=0, help="Base seed for finite-shot sampling")
     args = parser.parse_args()
 
     if args.config is not None:
@@ -985,6 +1007,8 @@ def main():
     if args.trotter_dt is not None:
         config.trotter_dt = args.trotter_dt
     config.trotter_order = args.trotter_order
+    config.shots = args.shots
+    config.shot_seed = args.shot_seed
 
     generate_regression_dataset(
         output_path=args.output,
