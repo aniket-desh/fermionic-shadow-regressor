@@ -1,0 +1,7 @@
+[lih] convergence of empirical vs exact per-qubit marginals (avg over 3 t x 8 Q):
+  S=    10: mean|emp-exact marginal| = 0.11103
+  S=   100: mean|emp-exact marginal| = 0.03741  (x2.97 for x10 S; sqrt-law -> ~3.16)
+  S=  1000: mean|emp-exact marginal| = 0.01302  (x2.87 for x10 S; sqrt-law -> ~3.16)
+  S= 10000: mean|emp-exact marginal| = 0.00390  (x3.34 for x10 S; sqrt-law -> ~3.16)
+  S=100000: mean|emp-exact marginal| = 0.00124  (x3.15 for x10 S; sqrt-law -> ~3.16)
+  PASS if error decreases ~3.16x per 10x S (1/sqrt(S)).
