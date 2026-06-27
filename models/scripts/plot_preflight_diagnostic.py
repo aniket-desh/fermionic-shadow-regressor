@@ -77,7 +77,7 @@ def main():
     for ax in (axA, axB):
         ax.set_axisbelow(True)
         ax.grid(True, color="0.9", lw=0.5)
-        ax.set_xlabel(r"$R$ (\AA)")
+        ax.set_xlabel("$R$ (Å)")
     axA.set_ylabel(r"$\omega_\mathrm{op}(R)$ ($E_\mathrm{h}$)")
     axA.set_title(r"Bandwidth: sets $\Delta t \leq \pi/\omega_\mathrm{op}$")
     axA.legend(frameon=False, ncol=2, fontsize=6, handlelength=1.4)

@@ -76,7 +76,7 @@ def smoothness():
              fontsize=5, va="top", ha="left", rotation=90)
     for ax, ttl, yl in [(axR, "Geometry smoothness $S_R(R)$", r"$\langle\|\partial_R\langle\Gamma\rangle\|\rangle$"),
                         (axt, "Temporal bandwidth $S_t(R)$", r"$\langle\|\partial_t\langle\Gamma\rangle\|\rangle$")]:
-        ax.set_xlabel(r"$R$ (\AA)")
+        ax.set_xlabel("$R$ (Å)")
         ax.set_ylabel(yl)
         ax.set_title(ttl)
         ax.grid(True, color="0.9", lw=0.5)
