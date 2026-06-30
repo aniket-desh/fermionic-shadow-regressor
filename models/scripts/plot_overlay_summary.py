@@ -89,7 +89,7 @@ def main():
     a1.set_ylabel(r"decorrelation $1-r$")
     draw(a2, raw, color, "absdev", label_end=True)
     a2.set_ylabel(r"$|\mathrm{range\ ratio}-1|$")
-    fig.text(0.5, 0.005, "shaded: pre-flight-congested N$_2$ region (predicted failure)",
+    fig.text(0.5, 0.005, "shaded: screen-flagged N$_2$ region (predicted failure)",
              ha="center", fontsize=5.5, color="0.4")
     fig.tight_layout(rect=[0, 0.02, 1, 1])
     fig.savefig(os.path.join(ODIR, "cross_molecule_overlay.pdf"))
