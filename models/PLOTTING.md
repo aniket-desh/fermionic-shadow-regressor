@@ -10,8 +10,7 @@ human or an agent — every command is copy-paste and **run from `models/`**.
 
 ```bash
 cd models
-export HF_TOKEN=hf_xxx                 # your token, read access to the dataset repo
-python -m scripts.fetch_plot_data      # pulls the ~16 MB plot cache from HF into results/
+python -m scripts.fetch_plot_data      # pulls the ~16 MB plot cache from HF into results/ (repo is public)
 python -m scripts.plot_baseline_comparison   # ... or any command in the table below
 ```
 
@@ -44,8 +43,8 @@ All 9 plotting modules call `apply_nature_style(...)`, so a change in `nature_st
 
 ## Getting the data
 
-Two things live on HuggingFace, private repo **`aniketdesh/molecular-shadows-datasets`**
-(you need read access; set `HF_TOKEN`):
+Two things live on HuggingFace, in **`aniketdesh/molecular-shadows-datasets`** (currently
+**public** — no token needed; if it is ever set back to private, set `HF_TOKEN` with read access):
 
 1. **`plot_cache/`** — the derived per-figure inputs (baseline stats, 5-seed eval JSONs,
    freq/smoothness `.npz`, dipole `.pkl`, overlay JSONs, coherence grids; ~16 MB). Its layout
@@ -142,7 +141,7 @@ $SNAP/<mol>/regression_targets.h5`; see `RUNPOD_FIG_LABELS.md` for the per-molec
 ## Agent quick-reference
 
 - Run everything from `models/`. Fast figures: `python -m scripts.<name>` (see table). Data:
-  `python -m scripts.fetch_plot_data` (needs `HF_TOKEN`). Coherence restyle:
+  `python -m scripts.fetch_plot_data` (public repo, no token). Coherence restyle:
   `python -m scripts.replot_coherence_from_grid --grid <coherence_grid.npz> --out <pdf>`.
 - Global style: `fermionic_pipeline/eval/nature_style.py` (`apply_nature_style`, `FONT_*`,
   `SINGLE_COL`/`DOUBLE_COL`). Per-figure centering: the `figsize`/`tight_layout` in each script.

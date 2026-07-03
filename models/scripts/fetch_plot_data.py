@@ -51,18 +51,20 @@ def main():
     args = ap.parse_args()
 
     from huggingface_hub import snapshot_download
-    tok = _token()
-    if not tok:
-        sys.exit("No HF token found. Set HF_TOKEN in your env or models/.env "
-                 "(needs read access to the private dataset repo).")
+    tok = _token()   # optional: the repo is public, so no token is needed; a token is
+                     # only required if it is ever set back to private.
 
     patterns = ["plot_cache/**"]
     if args.with_datasets:
         patterns += ["*/regression_targets.h5", "*/extrap_regression_targets.h5",
                      "*/regressor.pt", "*/regressor_eval.json"]
 
-    local = snapshot_download(repo_id=REPO, repo_type="dataset", token=tok,
-                              allow_patterns=patterns)
+    try:
+        local = snapshot_download(repo_id=REPO, repo_type="dataset", token=tok,
+                                  allow_patterns=patterns)
+    except Exception as e:
+        sys.exit(f"Download failed ({type(e).__name__}). If the repo is private, set HF_TOKEN "
+                 f"(read access) in your env or models/.env.\n  {str(e)[:200]}")
     print(f"[hf] downloaded to {local}")
 
     # copy plot_cache/<...> -> results/<...>  (mirrors the results/ layout)
