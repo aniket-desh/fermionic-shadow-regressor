@@ -221,3 +221,9 @@ models/REGRESSION_GUIDE.md
 *.blg
 *.synctex.gz
 *.out.tex
+
+# local background/theory notes
+background/
+
+# internal RunPod briefings — never track (repo is public)
+RUNPOD_*.md
