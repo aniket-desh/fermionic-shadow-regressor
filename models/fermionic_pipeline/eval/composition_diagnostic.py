@@ -30,7 +30,7 @@ import numpy as np
 import torch
 
 from fermionic_pipeline.data.regression_dataset import RegressionDatasetHandle
-from fermionic_pipeline.eval.regressor_eval import predict_signal_matrix
+from fermionic_pipeline.eval.regressor_eval import initial_values_for, predict_signal_matrix
 from fermionic_pipeline.training.regressor_trainer import load_checkpoint_model
 
 
@@ -174,8 +174,10 @@ def main():
         else:
             omega_op = float(handle.omega_op[r_idx]) if handle.omega_op is not None else None
 
+        d0 = initial_values_for(handle, model)
         D_model = predict_signal_matrix(model, R, handle.times, device,
-                                        orb_energies=orb_e, omega_op=omega_op)
+                                        orb_energies=orb_e, omega_op=omega_op,
+                                        initial_values=d0)
         D_exact = handle.expectations[r_idx].T  # (K, N_t)
 
         m = composition_metrics(D_model, D_exact, handle.times, amp_floor_frac=args.amp_floor_frac)

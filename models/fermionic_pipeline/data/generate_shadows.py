@@ -424,33 +424,8 @@ def prepare_initial_state(H_sparse, n_qubits, n_electrons=None):
     eigvals = np.sort(eigvals)
 
     if n_electrons is not None:
-        # HF state: occupy the first n_electrons spin-orbitals
-        hf_idx = sum(1 << (n_qubits - 1 - i) for i in range(n_electrons))
-        psi_0 = np.zeros(dim, dtype=complex)
-        psi_0[hf_idx] = 1.0
-
-        # Add single excitations to break symmetry.
-        # Each excitation flips one occupied bit off and one virtual bit on,
-        # accessing different (particle-number, S_z) sectors.
-        n_virt = n_qubits - n_electrons
-        excitations = []
-        for occ in range(n_electrons):
-            for virt in range(n_electrons, n_qubits):
-                exc_idx = hf_idx ^ (1 << (n_qubits - 1 - occ)) ^ (1 << (n_qubits - 1 - virt))
-                excitations.append(exc_idx)
-                if len(excitations) >= 4:
-                    break
-            if len(excitations) >= 4:
-                break
-
-        # Superposition: sqrt(0.8)|HF> + sqrt(0.2/n_exc) sum_i |exc_i>
-        n_exc = len(excitations)
-        if n_exc > 0:
-            amp_exc = np.sqrt(0.2 / n_exc)
-            psi_0[hf_idx] = np.sqrt(0.8)
-            for exc_idx in excitations:
-                psi_0[exc_idx] = amp_exc
-        psi_0 /= np.linalg.norm(psi_0)
+        from fermionic_pipeline.data.majorana_observables import broadened_hf_state
+        psi_0 = broadened_hf_state(n_qubits, n_electrons)
     else:
         _, eigvecs = eigsh(H_sparse.tocsc(), k=2, which="SA")
         gs = eigvecs[:, 0].real

@@ -582,6 +582,9 @@ class RegressionDatasetHandle:
         self.path = path
         with h5py.File(path, "r") as f:
             self.n_atoms = int(f.attrs["n_atoms"])
+            self.molecule = f.attrs.get("molecule", f"h{self.n_atoms}")
+            if isinstance(self.molecule, bytes):
+                self.molecule = self.molecule.decode()
             self.n_qubits = int(f.attrs["n_qubits"])
             self.n_modes = int(f.attrs["n_modes"])
             self.n_observables = int(f.attrs["n_observables"])
@@ -604,13 +607,21 @@ class RegressionTorchDataset(Dataset):
     """PyTorch dataset: (R, t) → K observable expectations."""
 
     def __init__(
-        self, handle: RegressionDatasetHandle, r_indices: Optional[Sequence[int]] = None
+        self, handle: RegressionDatasetHandle, r_indices: Optional[Sequence[int]] = None,
+        t_indices: Optional[Sequence[int]] = None,
+        include_initial_values: bool = False,
+        as_dict: bool = False,
     ):
         self.handle = handle
         if r_indices is None:
             r_indices = list(range(len(handle.R_values)))
         self.r_indices = np.array(sorted(r_indices), dtype=np.int64)
-        self.n_t = len(handle.times)
+        if t_indices is None:
+            t_indices = list(range(len(handle.times)))
+        self.t_indices = np.array(sorted(t_indices), dtype=np.int64)
+        self.n_t = len(self.t_indices)
+        self.include_initial_values = include_initial_values
+        self.as_dict = as_dict
 
     def __len__(self):
         return len(self.r_indices) * self.n_t
@@ -624,7 +635,8 @@ class RegressionTorchDataset(Dataset):
         return self.handle.omega_op is not None
 
     def __getitem__(self, idx):
-        t_idx = idx % self.n_t
+        t_local = idx % self.n_t
+        t_idx = int(self.t_indices[t_local])
         r_local = idx // self.n_t
         r_idx = int(self.r_indices[r_local])
 
@@ -634,6 +646,10 @@ class RegressionTorchDataset(Dataset):
         targets = self.handle.expectations[r_idx, t_idx].astype(np.float32)
 
         out = {"rt": torch.from_numpy(rt), "targets": torch.from_numpy(targets)}
+        if self.include_initial_values:
+            out["initial_values"] = torch.from_numpy(
+                self.handle.initial_values[r_idx].astype(np.float32)
+            )
         if self.has_orbital_energies:
             out["orb_e"] = torch.from_numpy(
                 self.handle.hf_orbital_energies[r_idx].astype(np.float32)
@@ -643,8 +659,20 @@ class RegressionTorchDataset(Dataset):
                 float(self.handle.omega_op[r_idx]), dtype=torch.float32
             )
 
+        if self.as_dict:
+            return out
+
         # Backward-compat tuple form (no omega_op consumers): preserves the
         # 2- and 3-tuple shapes expected by existing trainer/eval code paths.
+        if self.include_initial_values:
+            if "omega_op" in out and "orb_e" in out:
+                return (out["rt"], out["orb_e"], out["omega_op"],
+                        out["initial_values"], out["targets"])
+            if "omega_op" in out:
+                return out["rt"], out["omega_op"], out["initial_values"], out["targets"]
+            if "orb_e" in out:
+                return out["rt"], out["orb_e"], out["initial_values"], out["targets"]
+            return out["rt"], out["initial_values"], out["targets"]
         if "omega_op" in out:
             if "orb_e" in out:
                 return out["rt"], out["orb_e"], out["omega_op"], out["targets"]

@@ -5,6 +5,7 @@ Trainer for the direct observable regressor.
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import os
 import sys
@@ -87,6 +88,59 @@ def validate_orb_features(hf_orbital_energies):
             "(zero variance): they carry no conditioning signal. Check the datagen HF path."
         )
     return orb
+
+
+def _load_index_list(path, n_r, label):
+    """Load a JSON list (or {label: [...]}) of explicit geometry indices."""
+    with open(path) as f:
+        raw = json.load(f)
+    if isinstance(raw, dict):
+        raw = raw.get(label, raw.get(f"{label}_r_indices"))
+    if raw is None or not isinstance(raw, list):
+        raise ValueError(f"{path} must contain a JSON list or a {label!r} list")
+    idx = np.asarray(raw, dtype=int)
+    if len(idx) == 0 or len(np.unique(idx)) != len(idx):
+        raise ValueError(f"{label} indices must be non-empty and unique")
+    if idx.min() < 0 or idx.max() >= n_r:
+        raise ValueError(f"{label} index outside [0, {n_r})")
+    return np.sort(idx)
+
+
+def resolve_geometry_split(n_r, seed, test_fraction, train_file=None, test_file=None):
+    """Resolve random or explicit train/test geometry splits with strict checks."""
+    if train_file is None and test_file is None:
+        return split_r_indices(n_r, test_fraction=test_fraction, seed=seed)
+    train = _load_index_list(train_file, n_r, "train") if train_file else None
+    test = _load_index_list(test_file, n_r, "test") if test_file else None
+    universe = np.arange(n_r, dtype=int)
+    if train is None:
+        train = np.setdiff1d(universe, test)
+    if test is None:
+        test = np.setdiff1d(universe, train)
+    overlap = np.intersect1d(train, test)
+    if len(overlap):
+        raise ValueError(f"train/test geometry indices overlap: {overlap.tolist()}")
+    return train, test
+
+
+def transformed_training_handle(handle, train_r, scale=1.0, mode="per-geometry"):
+    """Return a shallow handle view with train-defined screen perturbations.
+
+    ``global-max`` replaces every ceiling by the maximum over training
+    geometries only.  This is the conservative no-per-test-geometry prior.
+    """
+    if handle.omega_op is None:
+        return handle
+    if scale <= 0:
+        raise ValueError("--omega_op_scale must be positive")
+    out = copy.copy(handle)
+    omega = np.asarray(handle.omega_op, dtype=float).copy()
+    if mode == "global-max":
+        omega[:] = float(np.max(omega[np.asarray(train_r, dtype=int)]))
+    elif mode != "per-geometry":
+        raise ValueError(f"unknown omega_op mode {mode!r}")
+    out.omega_op = omega * float(scale)
+    return out
 
 
 def _pearson_corr(pred, target, eps=1e-8):
@@ -190,6 +244,12 @@ class RegressorTrainer:
                 }
             else:
                 self._omega_op = None
+            self._initial_values = {
+                r_idx: torch.from_numpy(
+                    handle.expectations[r_idx, 0].astype(np.float32)
+                ).to(device)
+                for r_idx in self.train_r_indices
+            }
         self.tcorr_meter = AverageMeter()
 
     def _loader(self, dataset, shuffle=True):
@@ -198,22 +258,34 @@ class RegressorTrainer:
             shuffle=shuffle, drop_last=shuffle,
         )
 
+    @staticmethod
+    def _batch_size(batch):
+        return (batch["rt"] if isinstance(batch, dict) else batch[0]).shape[0]
+
     def _compute_loss(self, batch):
-        if len(batch) == 4:
+        initial_values = None
+        if isinstance(batch, dict):
+            rt, targets = batch["rt"], batch["targets"]
+            orb_e = batch.get("orb_e")
+            omega_op = batch.get("omega_op")
+            initial_values = batch.get("initial_values")
+            orb_e = orb_e.to(self.device) if orb_e is not None else None
+            omega_op = omega_op.to(self.device) if omega_op is not None else None
+            initial_values = initial_values.to(self.device) if initial_values is not None else None
+        elif len(batch) == 4:
             rt, orb_e, omega_op, targets = batch
-            orb_e = orb_e.to(self.device)
-            omega_op = omega_op.to(self.device)
+            orb_e = orb_e.to(self.device); omega_op = omega_op.to(self.device)
         elif len(batch) == 3:
             rt, orb_e, targets = batch
-            orb_e = orb_e.to(self.device)
-            omega_op = None
+            orb_e = orb_e.to(self.device); omega_op = None
         else:
             rt, targets = batch
             orb_e = None
             omega_op = None
         rt = rt.to(self.device)
         targets = targets.to(self.device)
-        pred = self.model(rt, orb_energies=orb_e, omega_op=omega_op)
+        pred = self.model(rt, orb_energies=orb_e, omega_op=omega_op,
+                          initial_values=initial_values)
         mse = F.mse_loss(pred, targets)
         corr = _pearson_corr(pred, targets)
         loss = mse
@@ -242,7 +314,10 @@ class RegressorTrainer:
         if getattr(self, "_omega_op", None) is not None and r_idx in self._omega_op:
             omega_op = self._omega_op[r_idx].expand(N_t)
 
-        pred = self.model(rt, orb_energies=orb_e, omega_op=omega_op).T  # (K, N_t)
+        d0 = self._initial_values[r_idx].unsqueeze(0).expand(N_t, -1) \
+            if self.model.config.enforce_initial_condition else None
+        pred = self.model(rt, orb_energies=orb_e, omega_op=omega_op,
+                          initial_values=d0).T  # (K, N_t)
         pred_w = pred * self._hann_window
         P_pred = torch.abs(torch.fft.rfft(pred_w, dim=1)) ** 2
         P_pred_norm = P_pred / (P_pred.sum(dim=1, keepdim=True) + 1e-10)
@@ -270,7 +345,10 @@ class RegressorTrainer:
         if getattr(self, "_omega_op", None) is not None and r_idx in self._omega_op:
             omega_op = self._omega_op[r_idx].expand(N_t)
 
-        pred = self.model(rt, orb_energies=orb_e, omega_op=omega_op).T   # (K, N_t)
+        d0 = self._initial_values[r_idx].unsqueeze(0).expand(N_t, -1) \
+            if self.model.config.enforce_initial_condition else None
+        pred = self.model(rt, orb_energies=orb_e, omega_op=omega_op,
+                          initial_values=d0).T   # (K, N_t)
         targ = self._exact_D[r_idx]                                       # (K, N_t)
 
         p = pred - pred.mean(dim=1, keepdim=True)
@@ -288,7 +366,7 @@ class RegressorTrainer:
         with torch.no_grad():
             for batch in loader:
                 _, mse, corr = self._compute_loss(batch)
-                n = batch[0].shape[0]
+                n = self._batch_size(batch)
                 mse_m.update(mse.item(), n)
                 corr_m.update(corr.item(), n)
         return mse_m.average(), corr_m.average()
@@ -361,7 +439,7 @@ class RegressorTrainer:
             self.optimizer.step()
             self.scheduler.step()
 
-            n = batch[0].shape[0]
+            n = self._batch_size(batch)
             self.mse_meter.update(mse.item(), n)
             self.corr_meter.update(corr.item(), n)
 
@@ -444,6 +522,15 @@ def main():
     parser.add_argument("--weight_decay", type=float, default=1e-4)
     parser.add_argument("--eval_every", type=int, default=1000)
     parser.add_argument("--test_fraction", type=float, default=0.2)
+    parser.add_argument("--train_r_indices_file", type=str, default=None,
+                        help="JSON list (or manifest with train key) of explicit training R indices.")
+    parser.add_argument("--test_r_indices_file", type=str, default=None,
+                        help="JSON list (or manifest with test key) of explicit held-out R indices. "
+                             "If one side is omitted, its complement is used.")
+    parser.add_argument("--train_t_max", type=float, default=None,
+                        help="Train only on times <= this horizon; validation/evaluation remain full-grid.")
+    parser.add_argument("--train_t_stride", type=int, default=1,
+                        help="Use every nth time point for training (grid-design robustness).")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--d_hidden", type=int, default=256)
     parser.add_argument("--n_layers", type=int, default=3)
@@ -459,6 +546,11 @@ def main():
     parser.add_argument("--omega_op_floor", type=float, default=0.0,
                         help="v12: ω_max(R) = max(ω_op(R), floor); 0 = v11 behavior. "
                              "Floors the long-R band so slots aren't packed too tightly when ω_op(R) is small.")
+    parser.add_argument("--omega_op_scale", type=float, default=1.0,
+                        help="Multiply all training screen ceilings by this factor (robustness audit).")
+    parser.add_argument("--omega_op_mode", choices=["per-geometry", "global-max"],
+                        default="per-geometry", help="global-max uses one conservative ceiling "
+                        "computed from training geometries only.")
     parser.add_argument("--alpha_corr", type=float, default=0.0,
                         help="Weight on cross-observable Pearson loss (per-(R,t) across K obs). "
                              "NOTE: this is NOT the same as the eval-time per-observable temporal "
@@ -498,6 +590,10 @@ def main():
                              "clipping, v17). Fixes the v16 5/27 finding that joint clipping "
                              "throttled the explicit branch and broke borderline composition. "
                              "Recommended: --residual_grad_clip 1.0 --grad_clip 0.")
+    parser.add_argument("--enforce_initial_condition", action="store_true",
+                        help="Anchor predictions to known D(R,0) using cos(ωt)-1.")
+    parser.add_argument("--ordered_frequencies", action="store_true",
+                        help="Use cumulative-softplus ordered frequencies to remove label symmetry.")
     args = parser.parse_args()
 
     if args.with_residual and not args.explicit_amplitude:
@@ -506,13 +602,47 @@ def main():
     os.makedirs(args.save_dir, exist_ok=True)
     device = torch.device(args.device or ("cuda" if torch.cuda.is_available() else "cpu"))
 
-    handle = RegressionDatasetHandle(args.data_path)
-    train_r, test_r = split_r_indices(
-        len(handle.R_values), test_fraction=args.test_fraction, seed=args.seed,
+    raw_handle = RegressionDatasetHandle(args.data_path)
+    train_r, test_r = resolve_geometry_split(
+        len(raw_handle.R_values), args.seed, args.test_fraction,
+        train_file=args.train_r_indices_file, test_file=args.test_r_indices_file,
     )
+    handle = transformed_training_handle(
+        raw_handle, train_r, scale=args.omega_op_scale, mode=args.omega_op_mode,
+    )
+    if args.enforce_initial_condition:
+        from fermionic_pipeline.data.generate_shadows import molecule_n_electrons
+        from fermionic_pipeline.data.majorana_observables import known_initial_channels
+        d0 = known_initial_channels(
+            handle.n_qubits, molecule_n_electrons(handle.molecule), handle.observable_keys,
+        )
+        handle.initial_values = np.tile(d0, (len(handle.R_values), 1))
 
-    train_ds = RegressionTorchDataset(handle, r_indices=train_r)
-    test_ds = RegressionTorchDataset(handle, r_indices=test_r)
+    if args.train_t_stride < 1:
+        raise ValueError("--train_t_stride must be >= 1")
+    train_t = np.arange(0, len(handle.times), args.train_t_stride, dtype=int)
+    if args.train_t_max is not None:
+        train_t = train_t[handle.times[train_t] <= args.train_t_max + 1e-12]
+        if len(train_t) < 2:
+            raise ValueError("--train_t_max retains fewer than two time points")
+        print(f"[info] shortened training horizon: {len(train_t)}/{len(handle.times)} "
+              f"times through t={handle.times[train_t[-1]]:.6g}")
+    elif args.train_t_stride == 1:
+        train_t = None
+    else:
+        print(f"[info] coarsened training time grid: stride={args.train_t_stride}, "
+              f"dt={handle.times[args.train_t_stride] - handle.times[0]:.6g}")
+
+    train_ds = RegressionTorchDataset(
+        handle, r_indices=train_r, t_indices=train_t,
+        include_initial_values=args.enforce_initial_condition,
+        as_dict=True,
+    )
+    test_ds = RegressionTorchDataset(
+        handle, r_indices=test_r,
+        include_initial_values=args.enforce_initial_condition,
+        as_dict=True,
+    )
 
     n_orb = 0
     if args.use_orb_features:
@@ -531,6 +661,7 @@ def main():
             raise ValueError("--adaptive_bandwidth requires --conditioned_frequencies")
         floor_str = f", floored at {args.omega_op_floor}" if args.omega_op_floor > 0 else ""
         print(f"[info] adaptive bandwidth: ω_k(R) = max(ω_op(R){floor_str}) · sigmoid(freq_net(ε(R)))_k")
+        print(f"[info] screen robustness: mode={args.omega_op_mode}, scale={args.omega_op_scale:g}")
 
     model = init_observable_regressor(
         n_observables=handle.n_observables,
@@ -550,6 +681,8 @@ def main():
         explicit_amplitude=args.explicit_amplitude,
         amp_rank=args.amp_rank,
         with_residual=args.with_residual,
+        enforce_initial_condition=args.enforce_initial_condition,
+        ordered_frequencies=args.ordered_frequencies,
     )
 
     if args.standardize_orb_energies:
@@ -608,6 +741,12 @@ def main():
         "train_config": asdict(train_cfg),
         "train_r_indices": train_r.tolist(),
         "test_r_indices": test_r.tolist(),
+        "screen_experiment": {
+            "omega_op_mode": args.omega_op_mode,
+            "omega_op_scale": args.omega_op_scale,
+            "train_t_max": args.train_t_max,
+            "train_t_stride": args.train_t_stride,
+        },
         # omega_op at TRAINING geometries only: lets eval-time code build a
         # non-oracle interpolated ceiling without re-opening the training h5
         # (see eval/omega_source.py).

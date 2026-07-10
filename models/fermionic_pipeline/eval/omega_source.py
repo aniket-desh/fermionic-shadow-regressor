@@ -51,7 +51,19 @@ class OmegaOpSource:
                 raise ValueError("train-interp requires a training dataset with an omega_op field")
             idx = np.asarray(payload["train_r_indices"], dtype=int)
             R_train = np.asarray(src.R_values, dtype=float)[idx]
-            w_train = np.asarray(src.omega_op, dtype=float)[idx]
+            # New checkpoints persist the *effective* training ceilings after
+            # any robustness perturbation/globalization.  Prefer those values
+            # so evaluation exactly matches the experiment and never consults
+            # held-out screen values.  Older checkpoints fall back to the HDF5.
+            stored = payload.get("train_omega_op")
+            if stored is not None:
+                w_train = np.asarray(stored, dtype=float)
+                if len(w_train) != len(idx):
+                    raise ValueError(
+                        "checkpoint train_omega_op length does not match train_r_indices"
+                    )
+            else:
+                w_train = np.asarray(src.omega_op, dtype=float)[idx]
             order = np.argsort(R_train)
             self._R = R_train[order]
             self._w = w_train[order]

@@ -20,6 +20,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from fermionic_pipeline.data.regression_dataset import RegressionDatasetHandle
+from fermionic_pipeline.eval.regressor_eval import initial_values_for, predict_signal_matrix
 from fermionic_pipeline.eval.nature_style import (
     apply_nature_style,
     grid_figsize,
@@ -63,21 +64,13 @@ def _get_omega_op(handle, r_idx):
     return None
 
 
-@torch.no_grad()
-def predict_signal_matrix(model, R, times, device, orb_energies=None, omega_op=None):
-    N_t = len(times)
-    rt = np.stack([np.full(N_t, R), times], axis=1).astype(np.float32)
-    rt_tensor = torch.from_numpy(rt).to(device)
-    orb_e = None
-    if orb_energies is not None:
-        orb_e = torch.from_numpy(
-            np.tile(orb_energies.astype(np.float32), (N_t, 1))
-        ).to(device)
-    omega_op_t = None
-    if omega_op is not None:
-        omega_op_t = torch.full((N_t,), float(omega_op), dtype=torch.float32, device=device)
-    pred = model(rt_tensor, orb_energies=orb_e, omega_op=omega_op_t).cpu().numpy()
-    return pred.T  # (K, N_t)
+def _predict_at(handle, model, r_idx, times, device):
+    d0 = initial_values_for(handle, model)
+    return predict_signal_matrix(
+        model, float(handle.R_values[r_idx]), times, device,
+        orb_energies=_get_orb_energies(handle, r_idx),
+        omega_op=_get_omega_op(handle, r_idx), initial_values=d0,
+    )
 
 
 def plot_spectra(handle, model, test_r_indices, device, save_dir, ljung_box_p=0.06):
@@ -94,7 +87,7 @@ def plot_spectra(handle, model, test_r_indices, device, save_dir, ljung_box_p=0.
         ax = axes[row, col]
         R = float(handle.R_values[r_idx])
 
-        D_model = predict_signal_matrix(model, R, handle.times, device, orb_energies=_get_orb_energies(handle, r_idx), omega_op=_get_omega_op(handle, r_idx))
+        D_model = _predict_at(handle, model, r_idx, handle.times, device)
         D_exact = handle.expectations[r_idx].T
 
         omega_m, spec_m, _ = spectral_analysis(D_model, handle.times, ljung_box_p=ljung_box_p)
@@ -148,7 +141,7 @@ def plot_summary(handle, model, test_r_indices, device, save_dir):
 
     for r_idx in test_r_indices:
         R = float(handle.R_values[r_idx])
-        D_model = predict_signal_matrix(model, R, handle.times, device, orb_energies=_get_orb_energies(handle, r_idx), omega_op=_get_omega_op(handle, r_idx))
+        D_model = _predict_at(handle, model, r_idx, handle.times, device)
         D_exact = handle.expectations[r_idx].T
         Rs.append(R)
         mses.append(np.mean((D_model - D_exact) ** 2))
@@ -208,7 +201,7 @@ def plot_time_series(handle, model, test_r_indices, device, save_dir, n_obs=3, n
 
     for row, r_idx in enumerate(indices):
         R = float(handle.R_values[r_idx])
-        D_model = predict_signal_matrix(model, R, handle.times, device, orb_energies=_get_orb_energies(handle, r_idx), omega_op=_get_omega_op(handle, r_idx))
+        D_model = _predict_at(handle, model, r_idx, handle.times, device)
         D_exact = handle.expectations[r_idx].T  # (K, N_t)
 
         # Pick channels spanning the signal-variance range (loud -> quiet), an easy -> hard
@@ -264,7 +257,7 @@ def plot_chan_pipeline(handle, model, test_r_indices, device, save_dir, ljung_bo
 
     for r_idx in test_r_indices:
         R = float(handle.R_values[r_idx])
-        D_model = predict_signal_matrix(model, R, handle.times, device, orb_energies=_get_orb_energies(handle, r_idx), omega_op=_get_omega_op(handle, r_idx))
+        D_model = _predict_at(handle, model, r_idx, handle.times, device)
         D_exact = handle.expectations[r_idx].T  # (K, N_t)
 
         fig, axes = plt.subplots(2, 3, figsize=(DOUBLE_COL, DOUBLE_COL * 0.52))
@@ -381,7 +374,7 @@ def plot_coherence_heatmap(handle, model, test_r_indices, device, save_dir, wind
 
     for i, r_idx in enumerate(sorted_indices):
         R = Rs[i]
-        D_model = predict_signal_matrix(model, R, times, device, orb_energies=_get_orb_energies(handle, r_idx), omega_op=_get_omega_op(handle, r_idx))  # (K, N_t)
+        D_model = _predict_at(handle, model, r_idx, times, device)  # (K, N_t)
         D_exact = handle.expectations[r_idx].T  # (K, N_t)
 
         for j, t_start in enumerate(t_starts):

@@ -20,8 +20,20 @@ from fermionic_pipeline.inference.spectral_analysis import extract_peaks, spectr
 from fermionic_pipeline.training.regressor_trainer import load_checkpoint_model
 
 
+def initial_values_for(handle, model):
+    """Known, target-independent D(R,0) used by the anchored variant."""
+    if not model.config.enforce_initial_condition:
+        return None
+    from fermionic_pipeline.data.generate_shadows import molecule_n_electrons
+    from fermionic_pipeline.data.majorana_observables import known_initial_channels
+    return known_initial_channels(
+        handle.n_qubits, molecule_n_electrons(handle.molecule), handle.observable_keys,
+    )
+
+
 @torch.no_grad()
-def predict_signal_matrix(model, R, times, device, orb_energies=None, omega_op=None):
+def predict_signal_matrix(model, R, times, device, orb_energies=None, omega_op=None,
+                          initial_values=None):
     """Build D matrix directly from model predictions."""
     N_t = len(times)
     rt = np.stack([np.full(N_t, R), times], axis=1).astype(np.float32)
@@ -34,7 +46,13 @@ def predict_signal_matrix(model, R, times, device, orb_energies=None, omega_op=N
     omega_op_t = None
     if omega_op is not None:
         omega_op_t = torch.full((N_t,), float(omega_op), dtype=torch.float32, device=device)
-    pred = model(rt_tensor, orb_energies=orb_e, omega_op=omega_op_t).cpu().numpy()  # (N_t, K)
+    d0 = None
+    if initial_values is not None:
+        d0 = torch.from_numpy(
+            np.tile(np.asarray(initial_values, dtype=np.float32), (N_t, 1))
+        ).to(device)
+    pred = model(rt_tensor, orb_energies=orb_e, omega_op=omega_op_t,
+                 initial_values=d0).cpu().numpy()  # (N_t, K)
     return pred.T  # (K, N_t)
 
 
@@ -46,7 +64,11 @@ def evaluate_geometry(model, handle, r_idx, ljung_box_p, n_peaks, device, omega_
     else:
         omega_op = float(handle.omega_op[r_idx]) if handle.omega_op is not None else None
 
-    D_model = predict_signal_matrix(model, R, handle.times, device, orb_energies=orb_e, omega_op=omega_op)
+    d0 = initial_values_for(handle, model)
+    D_model = predict_signal_matrix(
+        model, R, handle.times, device, orb_energies=orb_e, omega_op=omega_op,
+        initial_values=d0,
+    )
     D_exact = handle.expectations[r_idx].T  # (K, N_t)
 
     # Per-observable metrics

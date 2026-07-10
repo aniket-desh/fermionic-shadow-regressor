@@ -40,6 +40,8 @@ class ObservableRegressorConfig:
     explicit_amplitude: bool = False  # y = Σ_k a_kμ(R) cos(ω_k t) + b_kμ(R) sin(ω_k t) + dc_μ(R)
     amp_rank: int = 16  # low-rank factorization of (K, n_obs) coefficient matrix; 0 = full rank
     with_residual: bool = False  # add v12f8-style MLP residual on top of explicit branch; shared ω
+    enforce_initial_condition: bool = False  # anchor y(R,0) to supplied known D0
+    ordered_frequencies: bool = False  # cumulative-softplus ordered frequency bank
 
     def to_dict(self):
         return asdict(self)
@@ -108,7 +110,7 @@ class ObservableRegressor(nn.Module):
                 amp_layers.extend([nn.Linear(config.d_hidden, config.d_hidden), nn.GELU()])
             amp_layers.append(nn.Linear(config.d_hidden, amp_out))
             self.amp_net = nn.Sequential(*amp_layers)
-            self.dc_net = nn.Sequential(
+            self.dc_net = None if config.enforce_initial_condition else nn.Sequential(
                 nn.Linear(amp_in, config.freq_net_hidden), nn.GELU(),
                 nn.Linear(config.freq_net_hidden, config.n_observables),
             )
@@ -154,11 +156,14 @@ class ObservableRegressor(nn.Module):
         if self.freq_net is not None:
             nn.init.zeros_(self.freq_net[-1].weight)
             if config.adaptive_bandwidth:
-                # Spread initial σ_k across (0, 1) so initial ω_k tile [0, ω_op]
-                # rather than collapsing at ω_op/2.
-                init_sigma = torch.linspace(0.05, 0.95, config.n_fourier)
-                init_logits = torch.log(init_sigma / (1.0 - init_sigma))
-                self.freq_net[-1].bias.data.copy_(init_logits)
+                if config.ordered_frequencies:
+                    # Equal positive increments -> k/(K+1) ordered tiling.
+                    self.freq_net[-1].bias.data.fill_(0.5413248546)  # inv_softplus(1)
+                else:
+                    # Spread initial σ_k across (0, 1) so initial ω_k tile [0, ω_op].
+                    init_sigma = torch.linspace(0.05, 0.95, config.n_fourier)
+                    init_logits = torch.log(init_sigma / (1.0 - init_sigma))
+                    self.freq_net[-1].bias.data.copy_(init_logits)
             else:
                 # Original behavior: initial ω ≈ ω_base.
                 nn.init.zeros_(self.freq_net[-1].bias)
@@ -174,6 +179,7 @@ class ObservableRegressor(nn.Module):
         rt: torch.Tensor,
         orb_energies: torch.Tensor = None,
         omega_op: torch.Tensor = None,
+        initial_values: torch.Tensor = None,
     ) -> torch.Tensor:
         """
         Args:
@@ -209,7 +215,13 @@ class ObservableRegressor(nn.Module):
             else:
                 omega_op_eff = omega_op
             x = orb_energies if (self.config.n_orb_features > 0 and orb_energies is not None) else R
-            sigma = torch.sigmoid(self.freq_net(x))           # (B, n_fourier) in (0, 1)
+            raw = self.freq_net(x)
+            if self.config.ordered_frequencies:
+                increments = F.softplus(raw)
+                sigma = torch.cumsum(increments, dim=-1)
+                sigma = sigma / (increments.sum(dim=-1, keepdim=True) + 1.0)
+            else:
+                sigma = torch.sigmoid(raw)                    # (B, n_fourier) in (0, 1)
             omega = omega_op_eff[:, None] * sigma             # (B, n_fourier) in (0, max(ω_op(R), floor))
         elif self.freq_net is not None:
             if self.config.n_orb_features > 0 and orb_energies is not None:
@@ -249,7 +261,17 @@ class ObservableRegressor(nn.Module):
                 a, b = amp.view(B, 2, K, n_obs).unbind(dim=1)         # each (B, K, n_obs)
                 y = torch.einsum("bk,bkn->bn", cos_t, a) \
                   + torch.einsum("bk,bkn->bn", sin_t, b)
-            y = y + self.dc_net(x_in)
+            if self.config.enforce_initial_condition:
+                if initial_values is None:
+                    raise ValueError("enforce_initial_condition requires initial_values input")
+                # Replace cos(ωt) by cos(ωt)-1 exactly.
+                if r > 0 and r < min(K, n_obs):
+                    at0 = torch.einsum("br,brn->bn", a_U.sum(dim=1), a_V)
+                else:
+                    at0 = a.sum(dim=1)
+                y = y - at0 + initial_values
+            else:
+                y = y + self.dc_net(x_in)
             if self.config.with_residual:
                 # v12f8-style trunk on shared ω. Last linear layer zero-init →
                 # residual ≡ 0 at step 0 → v16 starts as v15_explicit.
@@ -288,6 +310,8 @@ def init_observable_regressor(
     explicit_amplitude: bool = False,
     amp_rank: int = 16,
     with_residual: bool = False,
+    enforce_initial_condition: bool = False,
+    ordered_frequencies: bool = False,
 ):
     return ObservableRegressor(
         ObservableRegressorConfig(
@@ -308,5 +332,7 @@ def init_observable_regressor(
             explicit_amplitude=explicit_amplitude,
             amp_rank=amp_rank,
             with_residual=with_residual,
+            enforce_initial_condition=enforce_initial_condition,
+            ordered_frequencies=ordered_frequencies,
         )
     )
